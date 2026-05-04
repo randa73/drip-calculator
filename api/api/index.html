@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue from the Internet — DRIP Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0f; --surface: #111518; --surface2: #181d21;
+    --border: #1e2428; --border2: #252c31;
+    --accent: #c8f06e; --accent2: #7dd4fc; --accent3: #f0a868;
+    --muted: #4a5560; --text: #dde4ea; --text2: #8b9aa8; --text3: #5a6a78;
+    --green: #4ade80; --red: #f87171;
+    --radius: 10px; --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Instrument Sans', sans-serif; min-height: 100vh; font-size: 15px; line-height: 1.5; }
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:1000; opacity:0.4; }
+
+  .wrapper { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* PAGE NAV */
+  .page-nav { display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:5px; margin-bottom:36px; width:fit-content; }
+  .nav-btn { padding:10px 22px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--text2); font-family:'Instrument Sans',sans-serif; transition:all 0.15s; }
+  .nav-btn.active { background:var(--accent); color:#0a0e0f; }
+  .nav-btn:hover:not(.active) { color:var(--text); }
+
+  /* HEADER */
+  .header { margin-bottom: 36px; }
+  .eyebrow { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+  .header h1 { font-family:'DM Serif Display',serif; font-size:clamp(32px,5vw,52px); line-height:1.1; font-weight:400; }
+  .header h1 em { font-style:italic; color:var(--accent); }
+  .header p { color:var(--text2); margin-top:10px; font-size:14px; max-width:520px; }
+  .header p strong { color:var(--accent3); font-weight:500; }
+
+  /* INPUTS */
+  .input-panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:16px; display:grid; grid-template-columns:2fr 2fr 2fr 1.2fr; gap:20px; align-items:end; }
+  @media(max-width:640px){ .input-panel { grid-template-columns:1fr 1fr; } }
+  .fg { display:flex; flex-direction:column; gap:6px; }
+  .fg label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); }
+  input, select { background:var(--bg); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; width:100%; outline:none; transition:border-color 0.15s, box-shadow 0.15s; appearance:none; }
+  input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,240,110,0.08); }
+  input::placeholder { color:var(--muted); }
+
+  /* MANUAL ROW */
+  .manual-row { background:rgba(240,168,104,0.05); border:1px solid rgba(240,168,104,0.15); border-radius:var(--radius-lg); padding:20px 24px; margin-bottom:16px; display:none; gap:20px; align-items:end; flex-wrap:wrap; }
+  .manual-row.show { display:flex; }
+  .manual-label { width:100%; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent3); }
+  .manual-row .fg { flex:1; min-width:140px; }
+
+  /* BUTTONS */
+  .btn { padding:11px 24px; border-radius:var(--radius); font-family:'Instrument Sans',sans-serif; font-weight:600; font-size:13px; cursor:pointer; border:none; transition:all 0.15s; white-space:nowrap; }
+  .btn-primary { background:var(--accent); color:#0a0e0f; }
+  .btn-primary:hover { background:#d6f87a; transform:translateY(-1px); }
+  .btn-primary:active { transform:translateY(0); }
+  .btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--text2); padding:9px 18px; font-size:12px; }
+  .btn-ghost:hover { color:var(--text); border-color:var(--muted); }
+  .btn-export { background:var(--surface2); border:1px solid var(--border2); color:var(--accent); padding:9px 18px; font-size:12px; letter-spacing:0.02em; }
+  .btn-export:hover { background:var(--border2); border-color:var(--accent); }
+
+  /* BANNER */
+  .banner { padding:13px 18px; border-radius:var(--radius); margin-bottom:20px; font-size:12px; display:flex; align-items:center; gap:10px; font-family:'DM Mono',monospace; animation:fadeIn 0.25s ease; }
+  .banner-hint    { background:rgba(125,212,252,0.07); border:1px solid rgba(125,212,252,0.18); color:var(--accent2); }
+  .banner-loading { background:rgba(200,240,110,0.05); border:1px solid rgba(200,240,110,0.12); color:var(--accent); }
+  .banner-error   { background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.18); color:var(--red); }
+  .banner-success { background:rgba(74,222,128,0.07);  border:1px solid rgba(74,222,128,0.18);  color:var(--green); }
+  .banner-warn    { background:rgba(240,168,104,0.07); border:1px solid rgba(240,168,104,0.18); color:var(--accent3); }
+  .spinner { width:13px; height:13px; border:2px solid rgba(200,240,110,0.15); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:none; } }
+
+  /* SOURCE TAG */
+  .src-tag { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 12px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:20px; }
+  .src-tag.live   { background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2); color:var(--green); }
+  .src-tag.manual { background:rgba(240,168,104,0.08); border:1px solid rgba(240,168,104,0.2); color:var(--accent3); }
+  .src-dot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* SUMMARY CARDS */
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:12px; margin-bottom:28px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; transition:border-color 0.2s; }
+  .card:hover { border-color:var(--border2); }
+  .card-lbl { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); margin-bottom:8px; }
+  .card-val { font-family:'DM Mono',monospace; font-size:20px; font-weight:500; color:var(--text); line-height:1.2; }
+  .card-sub { font-size:11px; color:var(--text3); margin-top:4px; font-family:'DM Mono',monospace; }
+  .c-accent .card-val { color:var(--accent); }
+  .c-green  .card-val { color:var(--green); }
+  .c-blue   .card-val { color:var(--accent2); }
+
+  /* TABS ROW */
+  .tabs-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  .tabs { display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:4px; }
+  .tab { padding:8px 18px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--text2); font-family:'Instrument Sans',sans-serif; transition:all 0.15s; }
+  .tab.active { background:var(--surface2); color:var(--accent); border:1px solid var(--border2); }
+  .tab:hover:not(.active) { color:var(--text); }
+
+  /* TABLE */
+  .tbl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  thead th { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); padding:14px 20px; text-align:left; background:var(--surface2); border-bottom:1px solid var(--border); font-weight:400; }
+  thead th:not(:first-child) { text-align:right; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(255,255,255,0.02); }
+  tbody tr.qh { background:var(--surface2); }
+  tbody tr.qh td { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent3); padding:10px 20px; font-weight:500; }
+  td { padding:13px 20px; font-family:'DM Mono',monospace; font-size:13px; color:var(--text2); }
+  td:first-child { color:var(--text); }
+  td:not(:first-child) { text-align:right; }
+  td.pos { color:var(--green); }
+  td.acc { color:var(--accent); }
+  tr.total { background:var(--surface2) !important; border-top:1px solid var(--border2); }
+  tr.total td:first-child { color:var(--accent); font-weight:600; }
+
+  /* CALENDAR PAGE */
+  .cal-intro { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:28px; }
+  .cal-intro h2 { font-family:'DM Serif Display',serif; font-size:26px; font-weight:400; margin-bottom:8px; }
+  .cal-intro h2 em { font-style:italic; color:var(--accent2); }
+  .cal-intro p { color:var(--text2); font-size:14px; }
+  .month-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:20px; }
+  @media(max-width:640px){ .month-grid { grid-template-columns:repeat(3,1fr); } }
+  .mo-btn { padding:14px 8px; border-radius:var(--radius); font-family:'DM Mono',monospace; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border2); background:var(--surface); color:var(--text2); transition:all 0.15s; text-align:center; letter-spacing:0.05em; text-transform:uppercase; }
+  .mo-btn:hover { border-color:var(--muted); color:var(--text); }
+  .mo-btn.sel { background:rgba(125,212,252,0.1); border-color:var(--accent2); color:var(--accent2); }
+  .cal-actions { display:flex; gap:12px; margin-bottom:32px; flex-wrap:wrap; align-items:center; }
+  .cal-hint { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); }
+  .mo-section { margin-bottom:32px; }
+  .mo-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .mo-name { font-family:'DM Serif Display',serif; font-size:22px; font-weight:400; }
+  .cycle-badge { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 10px; border-radius:20px; background:rgba(125,212,252,0.1); color:var(--accent2); border:1px solid rgba(125,212,252,0.2); }
+  .stock-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+  .scard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:all 0.15s; position:relative; overflow:hidden; }
+  .scard::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); opacity:0; transition:opacity 0.15s; }
+  .scard:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .scard:hover::before { opacity:1; }
+  .sc-ticker { font-family:'DM Mono',monospace; font-size:16px; font-weight:500; color:var(--accent); margin-bottom:4px; }
+  .sc-name { font-size:11px; color:var(--text3); margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sc-stats { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill { font-family:'DM Mono',monospace; font-size:10px; padding:3px 8px; border-radius:20px; }
+  .p-yield  { background:rgba(74,222,128,0.1);  color:var(--green);  border:1px solid rgba(74,222,128,0.2); }
+  .p-sector { background:rgba(200,240,110,0.08); color:var(--accent); border:1px solid rgba(200,240,110,0.15); }
+  .p-freq   { background:rgba(125,212,252,0.08); color:var(--accent2); border:1px solid rgba(125,212,252,0.15); }
+  .sc-cta { margin-top:10px; font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; }
+  .scard:hover .sc-cta { color:var(--accent); }
+  .filter-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .f-btn { padding:6px 14px; border-radius:20px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border2); background:transparent; color:var(--text2); transition:all 0.15s; }
+  .f-btn.active { background:var(--surface2); color:var(--text); border-color:var(--muted); }
+
+  /* FOOTER */
+  .footer { margin-top:48px; padding-top:24px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- PAGE NAV -->
+  <div class="page-nav">
+    <button class="nav-btn active" id="navCalc" onclick="showPage('calc')">⚡ DRIP Calculator</button>
+    <button class="nav-btn" id="navCal" onclick="showPage('cal')">📅 Fill My Calendar</button>
+  </div>
+
+  <!-- ═══ CALCULATOR PAGE ═══════════════════════════════════════════════════ -->
+  <div id="calcPage">
+
+    <div class="header">
+      <div class="eyebrow">// Revenue from the Internet</div>
+      <h1>DRIP <em>Dividend</em><br>Calculator</h1>
+      <p>Live data from Finnhub — <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding income.</p>
+    </div>
+
+    <div class="input-panel">
+      <div class="fg">
+        <label>Ticker Symbol</label>
+        <input type="text" id="ticker" placeholder="SBUX, O, JNJ…" autocomplete="off">
+      </div>
+      <div class="fg">
+        <label>Shares Owned</label>
+        <input type="number" id="shares" placeholder="60.84" min="0.0001" step="any">
+      </div>
+      <div class="fg">
+        <label>Price Override <span style="color:var(--text3);font-size:9px">(optional)</span></label>
+        <input type="number" id="priceOvr" placeholder="Auto from Yahoo" min="0.01" step="0.01">
+      </div>
+      <div class="fg">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" id="calcBtn" onclick="run()">Calculate</button>
+      </div>
+    </div>
+
+    <!-- Manual fallback -->
+    <div class="manual-row" id="manualRow">
+      <div class="manual-label">⚠ No dividend data found — enter manually to continue</div>
+      <div class="fg">
+        <label>Annual Div / Share ($)</label>
+        <input type="number" id="manualDiv" placeholder="e.g. 2.44" min="0" step="0.01">
+      </div>
+      <div class="fg">
+        <label>Payout Frequency</label>
+        <select id="manualFreq">
+          <option value="quarterly">Quarterly</option>
+          <option value="monthly">Monthly</option>
+          <option value="semi-annual">Semi-Annual</option>
+          <option value="annual">Annual</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" onclick="runManual()">Use Manual Data</button>
+      </div>
+    </div>
+
+    <!-- Status banner -->
+    <div id="banner" class="banner banner-hint">
+      <span>💡</span>
+      <span>Enter a ticker &amp; shares, then hit Calculate. Fractional shares fully supported.</span>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="hidden">
+      <div id="srcTag" class="src-tag live">
+        <span class="src-dot"></span>
+        <span id="srcLabel">Live · Yahoo Finance</span>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="tabs-row">
+        <div class="tabs">
+          <button class="tab active" onclick="setTab('monthly',this)">Monthly</button>
+          <button class="tab" onclick="setTab('quarterly',this)">Quarterly</button>
+          <button class="tab" onclick="setTab('annual',this)">Full Year</button>
+        </div>
+        <button class="btn btn-export" onclick="exportCSV()">⬇ Download CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead id="tHead"></thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end calcPage -->
+
+  <!-- ═══ CALENDAR PAGE ════════════════════════════════════════════════════ -->
+  <div id="calPage" class="hidden">
+
+    <div class="cal-intro">
+      <h2>Fill My <em>Dividend Calendar</em></h2>
+      <p>Select the months where your income is light. We'll show you stocks and ETFs that pay in exactly those months — so you build a smooth, consistent income stream all year round.</p>
+    </div>
+
+    <div style="margin-bottom:8px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:12px">Click to select your gap months</div>
+      <div class="month-grid" id="moGrid"></div>
+    </div>
+
+    <div class="cal-actions">
+      <button class="btn btn-primary" onclick="findFillers()">Find Stocks for My Gaps</button>
+      <button class="btn btn-ghost" onclick="clearMo()">Clear</button>
+      <span class="cal-hint">Click a stock card to load it into the calculator</span>
+    </div>
+
+    <div id="calResults"></div>
+
+  </div><!-- end calPage -->
+
+  <div class="footer">
+    <span>Revenue from the Internet · DRIP Calc · Finnhub</span>
+    <span id="fetchTime"></span>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let S = { ticker:'', shares:0, price:0, annualDiv:0, divYield:0, frequency:'quarterly', sector:'', dataMode:'', source:'' };
+let activeTab = 'monthly';
+let selMonths = new Set();
+
+const $ = id => document.getElementById(id);
+const fmt    = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtUSD = n => '$'+fmt(n);
+const fmtPct = n => fmt(n,2)+'%';
+
+// ── PAGE SWITCH ───────────────────────────────────────────────────────────────
+function showPage(p) {
+  $('calcPage').classList.toggle('hidden', p !== 'calc');
+  $('calPage').classList.toggle('hidden',  p !== 'cal');
+  $('navCalc').classList.toggle('active',  p === 'calc');
+  $('navCal').classList.toggle('active',   p === 'cal');
+  if (p === 'cal') renderMoGrid();
+}
+
+// ── BANNER ────────────────────────────────────────────────────────────────────
+function setBanner(type, html) {
+  const b = $('banner');
+  b.className = 'banner banner-' + type;
+  b.innerHTML = html;
+}
+function loading(msg) { setBanner('loading', `<div class="spinner"></div><span>${msg}</span>`); }
+
+// ── DATA: DIVIDEND LOOKUP TABLE ───────────────────────────────────────────────
+const DIV_TABLE = {
+  'AAPL':[1.00,'quarterly'],'MSFT':[3.32,'quarterly'],'JNJ':[4.96,'quarterly'],
+  'PG':[3.97,'quarterly'],'KO':[1.94,'quarterly'],'PEP':[5.42,'quarterly'],
+  'MCD':[7.08,'quarterly'],'WMT':[0.83,'quarterly'],'CVX':[6.52,'quarterly'],
+  'XOM':[3.96,'quarterly'],'MMM':[2.80,'quarterly'],'IBM':[6.68,'quarterly'],
+  'INTC':[0.50,'quarterly'],'CSCO':[1.60,'quarterly'],'VZ':[2.66,'quarterly'],
+  'T':[1.11,'quarterly'],'MO':[3.92,'quarterly'],'PM':[5.40,'quarterly'],
+  'ABT':[2.36,'quarterly'],'BMY':[2.48,'quarterly'],'ABBV':[6.56,'quarterly'],
+  'MRK':[3.28,'quarterly'],'PFE':[0.68,'quarterly'],'MDT':[2.80,'quarterly'],
+  'HON':[4.32,'quarterly'],'CAT':[5.40,'quarterly'],'TGT':[4.36,'quarterly'],
+  'HD':[9.00,'quarterly'],'LOW':[4.40,'quarterly'],'COST':[4.64,'quarterly'],
+  'TJX':[1.46,'quarterly'],'NKE':[1.48,'quarterly'],'SBUX':[2.44,'quarterly'],
+  'CL':[1.96,'quarterly'],'KMB':[4.96,'quarterly'],'GIS':[2.40,'quarterly'],
+  'JPM':[5.00,'quarterly'],'BAC':[1.00,'quarterly'],'WFC':[1.40,'quarterly'],
+  'C':[2.24,'quarterly'],'GS':[11.00,'quarterly'],'MS':[3.70,'quarterly'],
+  'USB':[2.00,'quarterly'],'PNC':[6.60,'quarterly'],'AXP':[2.80,'quarterly'],
+  'NEE':[2.31,'quarterly'],'DUK':[4.10,'quarterly'],'SO':[2.80,'quarterly'],
+  'D':[2.67,'quarterly'],'AEP':[3.52,'quarterly'],'XEL':[2.24,'quarterly'],
+  'ENB':[3.66,'quarterly'],'TRP':[3.72,'quarterly'],'KMI':[1.15,'quarterly'],
+  'WMB':[1.90,'quarterly'],'OKE':[3.96,'quarterly'],'ET':[1.25,'quarterly'],
+  'AVGO':[21.00,'quarterly'],'TXN':[6.28,'quarterly'],'QCOM':[3.40,'quarterly'],
+  'O':[3.17,'monthly'],'MAIN':[2.94,'monthly'],'STAG':[1.47,'monthly'],
+  'AGNC':[1.44,'monthly'],'ARCC':[1.92,'quarterly'],'HTGC':[1.60,'quarterly'],
+  'PSEC':[0.72,'monthly'],'WPC':[4.52,'quarterly'],'NNN':[2.28,'quarterly'],
+  'VICI':[1.72,'quarterly'],'AMT':[6.68,'quarterly'],'SPG':[7.60,'quarterly'],
+  'PLD':[3.80,'quarterly'],'DLR':[4.88,'quarterly'],'PSA':[12.00,'quarterly'],
+  'ADC':[1.40,'monthly'],'VYM':[3.20,'quarterly'],'SCHD':[2.80,'quarterly'],
+  'DVY':[4.20,'quarterly'],'HDV':[3.80,'quarterly'],'SDY':[2.80,'quarterly'],
+  'RTX':[2.68,'quarterly'],'LMT':[13.20,'quarterly'],'NOC':[8.00,'quarterly'],
+  'DE':[5.40,'quarterly'],'EMR':[2.10,'quarterly'],'ITW':[5.60,'quarterly'],
+  'ETN':[3.96,'quarterly'],'COP':[2.80,'quarterly'],'OXY':[0.88,'quarterly'],
+  'VLO':[4.40,'quarterly'],'PSX':[4.40,'quarterly'],
+};
+
+// ── DATA: FETCH ───────────────────────────────────────────────────────────────
+async function proxyFetch(url) {
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const res = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error('Proxy error ' + res.status);
+  const outer = await res.json();
+  if (!outer.contents) throw new Error('Empty response');
+  return JSON.parse(outer.contents);
+}
+
+async function fetchYahoo(ticker) {
+  const T = encodeURIComponent(ticker);
+  const [chart, summary] = await Promise.allSettled([
+    proxyFetch(`https://query2.finance.yahoo.com/v8/finance/chart/${T}?interval=1d&range=1d`),
+    proxyFetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${T}?modules=summaryDetail,assetProfile`)
+  ]);
+
+  if (chart.status !== 'fulfilled') throw new Error('Yahoo unreachable. Check connection.');
+  const meta = chart.value?.chart?.result?.[0]?.meta;
+  if (!meta) throw new Error(`Ticker "${ticker}" not found.`);
+
+  const price = meta.regularMarketPrice || meta.previousClose || 0;
+  let annualDiv = 0, divYield = 0, sector = '';
+
+  if (summary.status === 'fulfilled') {
+    const sd = summary.value?.quoteSummary?.result?.[0]?.summaryDetail;
+    const ap = summary.value?.quoteSummary?.result?.[0]?.assetProfile;
+    if (sd) { annualDiv = sd.dividendRate?.raw || 0; divYield = (sd.dividendYield?.raw||0)*100; }
+    if (ap) sector = ap.sector || '';
+  }
+  if (!annualDiv) {
+    annualDiv = meta.trailingAnnualDividendRate || 0;
+    divYield  = (meta.trailingAnnualDividendYield||0)*100;
+  }
+  return { price, annualDiv, divYield, sector, source:'Yahoo' };
+}
+
+const MONTHLY_SET = new Set(['O','MAIN','STAG','AGNC','PSEC','ADC','EARN','NEWT','GOOD','LAND','GAIN']);
+const SEMI_SET    = new Set(['BNS','TD','RY','BMO','CM','ENB','TRP']);
+
+function getFrequency(ticker, sector) {
+  const t = ticker.toUpperCase();
+  if (MONTHLY_SET.has(t)) return 'monthly';
+  if (SEMI_SET.has(t))    return 'semi-annual';
+  if (sector === 'Real Estate') return 'monthly';
+  return 'quarterly';
+}
+
+// ── MAIN RUN ──────────────────────────────────────────────────────────────────
+async function run() {
+  const ticker  = $('ticker').value.trim().toUpperCase();
+  const shares  = parseFloat($('shares').value);
+  const priceOvr = parseFloat($('priceOvr').value) || 0;
+
+  if (!ticker) return setBanner('error','<span>⚠️</span><span>Enter a ticker symbol.</span>');
+  if (!shares || shares <= 0) return setBanner('error','<span>⚠️</span><span>Enter the number of shares you own.</span>');
+
+  $('calcBtn').disabled = true;
+  $('results').classList.add('hidden');
+  $('manualRow').classList.remove('show');
+
+  try {
+    loading(`Fetching ${ticker} from Yahoo Finance…`);
+    let data = await fetchYahoo(ticker);
+    let price = priceOvr || data.price;
+
+    if (!price || price <= 0) throw new Error('No price returned. Enter a price override and try again.');
+
+    // If no dividend from Yahoo, check table
+    if (!data.annualDiv || data.annualDiv <= 0) {
+      const row = DIV_TABLE[ticker];
+      if (row) {
+        data.annualDiv = row[0];
+        data.source    = 'Yahoo + Table';
+        // infer frequency from table
+        data._freqOverride = row[1];
+      }
+    }
+
+    if (!data.annualDiv || data.annualDiv <= 0) {
+      setBanner('warn', `<span>⚠️</span><span>${ticker} — price $${fmt(price,2)} fetched but no dividend data found. Enter it manually below.</span>`);
+      $('manualRow').classList.add('show');
+      S.ticker = ticker; S.shares = shares; S.price = price;
+      $('calcBtn').disabled = false;
+      return;
+    }
+
+    const frequency = data._freqOverride || getFrequency(ticker, data.sector);
+    S = { ticker, shares, price, annualDiv: data.annualDiv, divYield: data.divYield || (data.annualDiv/price*100), frequency, sector: data.sector, dataMode:'live', source: data.source };
+
+    renderAll();
+    setBanner('success',
+      `<span>✅ ${data.source}</span>` +
+      `<span style="margin-left:auto;color:var(--text3);font-size:11px">${ticker} · ${fmtUSD(price)} · $${fmt(data.annualDiv,4)}/yr · ${frequency}</span>`
+    );
+    $('fetchTime').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  } catch(e) {
+    setBanner('error', `<span>⚠️</span><span>${e.message}</span>`);
+    $('manualRow').classList.add('show');
+    S.ticker = $('ticker').value.trim().toUpperCase();
+    S.shares = shares;
+    S.price  = priceOvr;
+  }
+  $('calcBtn').disabled = false;
+}
+
+// ── MANUAL ────────────────────────────────────────────────────────────────────
+function runManual() {
+  const ticker    = $('ticker').value.trim().toUpperCase() || 'TICKER';
+  const shares    = parseFloat($('shares').value);
+  const price     = parseFloat($('priceOvr').value) || S.price || 0;
+  const annualDiv = parseFloat($('manualDiv').value) || 0;
+  const frequency = $('manualFreq').value;
+
+  if (!shares || shares <= 0) return setBanner('error','<span>⚠️</span><span>Enter shares owned.</span>');
+  if (!price  || price  <= 0) return setBanner('error','<span>⚠️</span><span>Enter a price override — required for manual mode.</span>');
+  if (!annualDiv || annualDiv <= 0) return setBanner('error','<span>⚠️</span><span>Enter the annual dividend per share.</span>');
+
+  S = { ticker, shares, price, annualDiv, divYield:(annualDiv/price*100), frequency, sector:'', dataMode:'manual', source:'Manual' };
+  renderAll();
+  setBanner('warn','<span>📝</span><span>Using manually entered dividend data.</span>');
+}
+
+// ── PROJECTION ────────────────────────────────────────────────────────────────
+function project(startShares, price, annualDiv, frequency, months) {
+  const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[frequency]||4;
+  const divPerPeriod = annualDiv / freqN;
+  const mPerPeriod   = 12 / freqN;
+  let totalShares = startShares, rows = [];
+  for (let m = 1; m <= months; m++) {
+    let div = 0, ns = 0;
+    if (freqN === 12 || m % mPerPeriod === 0) {
+      div = totalShares * divPerPeriod;
+      ns  = div / price;
+      totalShares += ns;
+    }
+    rows.push({ m, div, ns, totalShares, val: totalShares * price });
+  }
+  return rows;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderAll() {
+  const tag = $('srcTag'), lbl = $('srcLabel');
+  if (S.dataMode === 'live') { tag.className='src-tag live'; lbl.textContent='Live · '+S.source; }
+  else { tag.className='src-tag manual'; lbl.textContent='Manual Entry'; }
+  renderCards();
+  renderTable();
+  $('results').classList.remove('hidden');
+}
+
+function renderCards() {
+  const { price, shares, annualDiv, divYield, frequency, ticker, sector } = S;
+  const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[frequency]||4;
+  const rows  = project(shares, price, annualDiv, frequency, 12);
+  const end   = rows[11];
+  $('cards').innerHTML = `
+    <div class="card c-accent"><div class="card-lbl">Share Price</div><div class="card-val">${fmtUSD(price)}</div><div class="card-sub">${ticker}${sector?' · '+sector:''}</div></div>
+    <div class="card"><div class="card-lbl">Shares Owned</div><div class="card-val">${fmt(shares,4)}</div><div class="card-sub">${fmtUSD(price*shares)} invested</div></div>
+    <div class="card"><div class="card-lbl">Annual Div / Share</div><div class="card-val">${fmtUSD(annualDiv)}</div><div class="card-sub">${divYield>0?fmtPct(divYield)+' · ':''}${frequency}</div></div>
+    <div class="card c-green"><div class="card-lbl">Annual Income</div><div class="card-val">${fmtUSD(annualDiv*shares)}</div><div class="card-sub">${fmtUSD((annualDiv/freqN)*shares)} / period</div></div>
+    <div class="card c-blue"><div class="card-lbl">Shares After 1 Yr</div><div class="card-val">${fmt(end.totalShares,4)}</div><div class="card-sub">+${fmt(end.totalShares-shares,4)} reinvested</div></div>
+    <div class="card"><div class="card-lbl">Portfolio Value</div><div class="card-val">${fmtUSD(end.val)}</div><div class="card-sub">After 1yr DRIP</div></div>`;
+}
+
+function setTab(t, el) {
+  activeTab = t;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  if (S.price > 0) renderTable();
+}
+
+function renderTable() {
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const rows = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
+
+  if (activeTab === 'monthly') {
+    $('tHead').innerHTML = `<tr><th>Month</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>`;
+    $('tBody').innerHTML = rows.map((r,i) => `<tr>
+      <td>${MN[i]}</td>
+      <td class="${r.div>0?'pos':''}">${r.div>0?fmtUSD(r.div):'—'}</td>
+      <td class="${r.ns>0?'acc':''}">${r.ns>0?'+'+fmt(r.ns,4):'—'}</td>
+      <td>${fmt(r.totalShares,4)}</td>
+      <td>${fmtUSD(r.val)}</td>
+    </tr>`).join('');
+  }
+  else if (activeTab === 'quarterly') {
+    $('tHead').innerHTML = `<tr><th>Period</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>`;
+    const qs = [{l:'Q1 — JAN · FEB · MAR',i:[0,1,2]},{l:'Q2 — APR · MAY · JUN',i:[3,4,5]},{l:'Q3 — JUL · AUG · SEP',i:[6,7,8]},{l:'Q4 — OCT · NOV · DEC',i:[9,10,11]}];
+    $('tBody').innerHTML = qs.map(q =>
+      `<tr class="qh"><td colspan="5">${q.l}</td></tr>` +
+      q.i.map(mi => { const r=rows[mi]; return `<tr>
+        <td style="padding-left:32px">${MN[mi]}</td>
+        <td class="${r.div>0?'pos':''}">${r.div>0?fmtUSD(r.div):'—'}</td>
+        <td class="${r.ns>0?'acc':''}">${r.ns>0?'+'+fmt(r.ns,4):'—'}</td>
+        <td>${fmt(r.totalShares,4)}</td><td>${fmtUSD(r.val)}</td>
+      </tr>`; }).join('')
+    ).join('');
+  }
+  else {
+    $('tHead').innerHTML = `<tr><th>Quarter</th><th>Div Income</th><th>New Shares</th><th>Shares Cumul.</th><th>% of Annual</th></tr>`;
+    const qs = [{l:'Q1',i:[0,1,2]},{l:'Q2',i:[3,4,5]},{l:'Q3',i:[6,7,8]},{l:'Q4',i:[9,10,11]}];
+    const total = rows.reduce((s,r)=>s+r.div,0);
+    $('tBody').innerHTML = qs.map(q => {
+      const inc = q.i.reduce((s,i)=>s+rows[i].div,0);
+      const ns  = q.i.reduce((s,i)=>s+rows[i].ns,0);
+      const end = rows[q.i[2]];
+      return `<tr><td>${q.l}</td><td class="pos">${fmtUSD(inc)}</td><td class="acc">+${fmt(ns,4)}</td><td>${fmt(end.totalShares,4)}</td><td>${total>0?fmtPct(inc/total*100):'—'}</td></tr>`;
+    }).join('') +
+    `<tr class="total"><td>Full Year</td><td class="pos">${fmtUSD(total)}</td><td class="acc">+${fmt(rows[11].totalShares-S.shares,4)}</td><td>${fmt(rows[11].totalShares,4)}</td><td style="color:var(--text2)">100%</td></tr>`;
+  }
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!S.price || !S.annualDiv) return;
+  const rows  = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
+  const end   = rows[11];
+  const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[S.frequency]||4;
+  const MN    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let csv = `DRIP DIVIDEND CALCULATOR EXPORT\nGenerated,${new Date().toLocaleDateString()}\nTicker,${S.ticker}\nData Source,${S.source}\n\n`;
+  csv += `=== SUMMARY ===\n`;
+  csv += `Share Price,$${fmt(S.price,2)}\nShares Owned,${fmt(S.shares,4)}\nAnnual Div/Share,$${fmt(S.annualDiv,4)}\n`;
+  csv += `Dividend Yield,${S.divYield>0?fmtPct(S.divYield):'N/A'}\nPayout Frequency,${S.frequency}\n`;
+  csv += `Annual Income,$${fmt(S.annualDiv*S.shares,2)}\nIncome Per Period,$${fmt((S.annualDiv/freqN)*S.shares,2)}\n`;
+  csv += `Shares After 1 Year,${fmt(end.totalShares,4)}\nNew Shares Reinvested,${fmt(end.totalShares-S.shares,4)}\n`;
+  csv += `Portfolio Value After 1 Year,$${fmt(end.val,2)}\n\n`;
+  csv += `=== MONTHLY PROJECTION ===\nMonth,Shares Start,Div Income,New Shares,Portfolio Value\n`;
+  rows.forEach((r,i) => {
+    csv += `${MN[i]},${fmt(r.totalShares-r.ns,4)},${r.div>0?'$'+fmt(r.div,2):''},${r.ns>0?'+'+fmt(r.ns,4):''},$${fmt(r.val,2)}\n`;
+  });
+  csv += `\n=== QUARTERLY SUMMARY ===\nQuarter,Div Income,New Shares,Shares End,Portfolio Value\n`;
+  [{l:'Q1',i:[0,1,2]},{l:'Q2',i:[3,4,5]},{l:'Q3',i:[6,7,8]},{l:'Q4',i:[9,10,11]}].forEach(q => {
+    const inc=q.i.reduce((s,i)=>s+rows[i].div,0), ns=q.i.reduce((s,i)=>s+rows[i].ns,0), e=rows[q.i[2]];
+    csv += `${q.l},$${fmt(inc,2)},+${fmt(ns,4)},${fmt(e.totalShares,4)},$${fmt(e.val,2)}\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `DRIP-${S.ticker}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+const MN_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const STOCK_DB = [
+  // Cycle B — Feb·May·Aug·Nov
+  {t:'TGT', n:'Target',              y:3.4, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'WMT', n:'Walmart',             y:1.1, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'COST',n:'Costco',              y:0.8, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'LOW', n:"Lowe's",              y:2.1, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'TJX', n:'TJX Companies',       y:1.4, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'NKE', n:'Nike',                y:1.6, s:'Consumer',   f:'quarterly', pay:[2,5,8,11]},
+  {t:'SBUX',n:'Starbucks',           y:2.7, s:'Consumer',   f:'quarterly', pay:[2,5,8,11]},
+  {t:'AXP', n:'American Express',    y:1.4, s:'Financial',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'GS',  n:'Goldman Sachs',       y:2.9, s:'Financial',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'MS',  n:'Morgan Stanley',      y:3.5, s:'Financial',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'USB', n:'US Bancorp',          y:5.0, s:'Financial',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'PNC', n:'PNC Financial',       y:3.8, s:'Financial',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'MET', n:'MetLife',             y:3.4, s:'Insurance',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'PRU', n:'Prudential',          y:4.8, s:'Insurance',  f:'quarterly', pay:[2,5,8,11]},
+  {t:'HON', n:'Honeywell',           y:2.4, s:'Industrial', f:'quarterly', pay:[2,5,8,11]},
+  {t:'CAT', n:'Caterpillar',         y:1.8, s:'Industrial', f:'quarterly', pay:[2,5,8,11]},
+  {t:'MMM', n:'3M Company',          y:5.8, s:'Industrial', f:'quarterly', pay:[2,5,8,11]},
+  {t:'RTX', n:'RTX Corp',            y:2.5, s:'Defense',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'LMT', n:'Lockheed Martin',     y:2.8, s:'Defense',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'NEE', n:'NextEra Energy',      y:2.8, s:'Utility',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'DUK', n:'Duke Energy',         y:4.4, s:'Utility',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'SO',  n:'Southern Company',    y:4.0, s:'Utility',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'AEP', n:'American Elec Power', y:3.8, s:'Utility',    f:'quarterly', pay:[2,5,8,11]},
+  {t:'CVX', n:'Chevron',             y:4.4, s:'Energy',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'COP', n:'ConocoPhillips',      y:2.2, s:'Energy',     f:'quarterly', pay:[2,5,8,11]},
+  {t:'TXN', n:'Texas Instruments',   y:3.1, s:'Tech',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'QCOM',n:'Qualcomm',            y:2.4, s:'Tech',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'IBM', n:'IBM',                 y:3.4, s:'Tech',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'CSCO',n:'Cisco',               y:3.4, s:'Tech',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'SPG', n:'Simon Property Group',y:5.4, s:'REIT',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'PLD', n:'Prologis',            y:2.9, s:'REIT',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'PSA', n:'Public Storage',      y:4.4, s:'REIT',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'WPC', n:'W.P. Carey',          y:6.2, s:'REIT',       f:'quarterly', pay:[2,5,8,11]},
+  {t:'ARCC',n:'Ares Capital',        y:9.2, s:'BDC',        f:'quarterly', pay:[2,5,8,11]},
+  {t:'HTGC',n:'Hercules Capital',    y:10.4,s:'BDC',        f:'quarterly', pay:[2,5,8,11]},
+  {t:'VYM', n:'Vanguard High Div',   y:2.9, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
+  {t:'DVY', n:'iShares Div Select',  y:3.8, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
+  {t:'HDV', n:'iShares Core Div',    y:3.5, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
+  // Cycle C — Mar·Jun·Sep·Dec
+  {t:'JNJ', n:'Johnson & Johnson',   y:3.2, s:'Healthcare', f:'quarterly', pay:[3,6,9,12]},
+  {t:'PG',  n:'Procter & Gamble',    y:2.5, s:'Consumer',   f:'quarterly', pay:[3,6,9,12]},
+  {t:'KO',  n:'Coca-Cola',           y:3.1, s:'Beverages',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'PEP', n:'PepsiCo',             y:3.4, s:'Beverages',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'MCD', n:"McDonald's",          y:2.4, s:'Restaurant', f:'quarterly', pay:[3,6,9,12]},
+  {t:'MO',  n:'Altria Group',        y:8.4, s:'Tobacco',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'PM',  n:'Philip Morris',       y:5.6, s:'Tobacco',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'T',   n:'AT&T',                y:5.9, s:'Telecom',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'VZ',  n:'Verizon',             y:6.8, s:'Telecom',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'JPM', n:'JPMorgan Chase',      y:2.4, s:'Financial',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'BAC', n:'Bank of America',     y:2.6, s:'Financial',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'WFC', n:'Wells Fargo',         y:2.8, s:'Financial',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'BLK', n:'BlackRock',           y:2.6, s:'Financial',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'ABBV',n:'AbbVie',              y:3.8, s:'Pharma',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'BMY', n:'Bristol-Myers Squibb',y:4.8, s:'Pharma',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'MRK', n:'Merck',               y:2.8, s:'Pharma',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'PFE', n:'Pfizer',              y:7.2, s:'Pharma',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'ABT', n:'Abbott Labs',         y:2.0, s:'MedDevice',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'MDT', n:'Medtronic',           y:3.6, s:'MedDevice',  f:'quarterly', pay:[3,6,9,12]},
+  {t:'EMR', n:'Emerson Electric',    y:2.2, s:'Industrial', f:'quarterly', pay:[3,6,9,12]},
+  {t:'ITW', n:'Illinois Tool Works', y:2.6, s:'Industrial', f:'quarterly', pay:[3,6,9,12]},
+  {t:'XOM', n:'ExxonMobil',          y:3.6, s:'Energy',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'ENB', n:'Enbridge',            y:7.4, s:'Pipeline',   f:'quarterly', pay:[3,6,9,12]},
+  {t:'KMI', n:'Kinder Morgan',       y:6.2, s:'Pipeline',   f:'quarterly', pay:[3,6,9,12]},
+  {t:'D',   n:'Dominion Energy',     y:5.0, s:'Utility',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'WEC', n:'WEC Energy',          y:3.4, s:'Utility',    f:'quarterly', pay:[3,6,9,12]},
+  {t:'MSFT',n:'Microsoft',           y:0.8, s:'Tech',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'AAPL',n:'Apple',               y:0.5, s:'Tech',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'AVGO',n:'Broadcom',            y:1.6, s:'Tech',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'HD',  n:'Home Depot',          y:2.6, s:'Retail',     f:'quarterly', pay:[3,6,9,12]},
+  {t:'CL',  n:'Colgate-Palmolive',   y:2.4, s:'Consumer',   f:'quarterly', pay:[3,6,9,12]},
+  {t:'GIS', n:'General Mills',       y:3.8, s:'Food',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'NNN', n:'NNN REIT',            y:5.4, s:'REIT',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'VICI',n:'VICI Properties',     y:5.2, s:'REIT',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'AMT', n:'American Tower',      y:3.2, s:'REIT',       f:'quarterly', pay:[3,6,9,12]},
+  {t:'SCHD',n:'Schwab US Div Equity',y:3.6, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
+  {t:'VIG', n:'Vanguard Div Apprec', y:1.8, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
+  {t:'DGRO',n:'iShares Div Growth',  y:2.4, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
+  // Monthly payers — all 12 months
+  {t:'O',   n:'Realty Income',       y:5.6, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'MAIN',n:'Main Street Capital', y:6.8, s:'BDC',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'STAG',n:'STAG Industrial',     y:4.2, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'AGNC',n:'AGNC Investment',     y:15.0,s:'mREIT',      f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'PSEC',n:'Prospect Capital',    y:13.2,s:'BDC',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'ADC', n:'Agree Realty',        y:4.4, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+];
+
+function renderMoGrid() {
+  $('moGrid').innerHTML = MN_SHORT.map((m,i) => {
+    const mo = i+1;
+    return `<button class="mo-btn ${selMonths.has(mo)?'sel':''}" onclick="toggleMo(${mo})">${m}</button>`;
+  }).join('');
+}
+
+function toggleMo(mo) {
+  if (selMonths.has(mo)) selMonths.delete(mo); else selMonths.add(mo);
+  renderMoGrid();
+}
+
+function clearMo() {
+  selMonths.clear();
+  renderMoGrid();
+  $('calResults').innerHTML = '';
+}
+
+function findFillers() {
+  if (selMonths.size === 0) { alert('Select at least one gap month first.'); return; }
+  const gaps = Array.from(selMonths).sort((a,b)=>a-b);
+  const matches = STOCK_DB.filter(s => gaps.every(mo => s.pay.includes(mo)));
+
+  if (matches.length === 0) {
+    $('calResults').innerHTML = `<div class="banner banner-warn"><span>⚠️</span><span>No stocks found for that combination. Try selecting fewer months.</span></div>`;
+    return;
+  }
+
+  const byMonth = {};
+  gaps.forEach(mo => { byMonth[mo] = []; });
+  matches.forEach(s => gaps.forEach(mo => { if (s.pay.includes(mo)) byMonth[mo].push(s); }));
+
+  const sectors = ['All', ...new Set(matches.map(s=>s.s).sort())];
+  let html = `
+    <div class="banner banner-success" style="margin-bottom:20px">
+      <span>✅</span><span>Found <strong>${[...new Set(matches.map(s=>s.t))].length} stocks/ETFs</strong> that pay in your gap months. Click any card to load it into the calculator.</span>
+    </div>
+    <div class="filter-row">
+      ${sectors.map(sec=>`<button class="f-btn ${sec==='All'?'active':''}" onclick="filterCal('${sec}',this)">${sec}</button>`).join('')}
+    </div>`;
+
+  gaps.forEach(mo => {
+    const stocks = byMonth[mo];
+    if (!stocks.length) return;
+    html += `<div class="mo-section">
+      <div class="mo-header"><div class="mo-name">${MN_SHORT[mo-1]}</div><div class="cycle-badge">${stocks.length} options</div></div>
+      <div class="stock-grid">
+        ${stocks.map(s=>`
+          <div class="scard" data-sector="${s.s}" onclick="loadTicker('${s.t}')">
+            <div class="sc-ticker">${s.t}</div>
+            <div class="sc-name">${s.n}</div>
+            <div class="sc-stats">
+              <span class="pill p-yield">${s.y.toFixed(1)}% yield</span>
+              <span class="pill p-sector">${s.s}</span>
+              <span class="pill p-freq">${s.f}</span>
+            </div>
+            <div class="sc-cta">→ Load into calculator</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  $('calResults').innerHTML = html;
+}
+
+function filterCal(sector, el) {
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.scard').forEach(c=>{
+    c.style.display = (sector==='All' || c.dataset.sector===sector) ? '' : 'none';
+  });
+}
+
+function loadTicker(ticker) {
+  showPage('calc');
+  $('ticker').value = ticker;
+  window.scrollTo({top:0,behavior:'smooth'});
+  const shares = parseFloat($('shares').value);
+  if (shares > 0) run();
+  else {
+    $('shares').focus();
+    setBanner('hint',`<span>💡</span><span>${ticker} loaded — enter your share count and hit Calculate.</span>`);
+  }
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+['ticker','shares','priceOvr'].forEach(id =>
+  $(id).addEventListener('keydown', e => { if (e.key==='Enter') run(); })
+);
+$('ticker').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+</script>
+</body>
+</html>
