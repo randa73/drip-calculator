@@ -347,43 +347,39 @@ const DIV_TABLE = {
   'DE':[5.40,'quarterly'],'EMR':[2.10,'quarterly'],'ITW':[5.60,'quarterly'],
   'ETN':[3.96,'quarterly'],'COP':[2.80,'quarterly'],'OXY':[0.88,'quarterly'],
   'VLO':[4.40,'quarterly'],'PSX':[4.40,'quarterly'],
+  // Monthly payers - covered income / options ETFs
+  'JEPI':[5.52,'monthly'],'JEPQ':[5.76,'monthly'],'SPYI':[5.64,'monthly'],
+  'QQQI':[5.88,'monthly'],'DIVO':[4.44,'monthly'],'NUSI':[3.60,'monthly'],
+  'QYLD':[3.48,'monthly'],'RYLD':[3.24,'monthly'],'XYLD':[4.08,'monthly'],
+  'SVOL':[4.80,'monthly'],'PBDC':[3.96,'monthly'],'BXSL':[2.64,'quarterly'],
+  'GLAD':[1.20,'monthly'],'GAIN':[1.32,'monthly'],'GOOD':[1.20,'monthly'],
+  'LAND':[0.84,'monthly'],'NEWT':[2.04,'monthly'],'EARN':[1.08,'monthly'],
+  'OXLC':[2.52,'monthly'],'ECC':[2.04,'monthly'],'SLRC':[1.64,'quarterly'],
+  'PFLT':[1.44,'monthly'],'TPVG':[1.44,'quarterly'],'CSWC':[2.20,'quarterly'],
 };
 
-async function proxyFetch(url) {
-  const proxy = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
-  const res = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
-  if (!res.ok) throw new Error('Proxy error ' + res.status);
-  const outer = await res.json();
-  if (!outer.contents) throw new Error('Empty response');
-  return JSON.parse(outer.contents);
+async function fetchFinnhub(ticker) {
+  const res = await fetch('/api/stock?ticker='+encodeURIComponent(ticker), {
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return {
+    price:     data.price    || 0,
+    annualDiv: data.annualDiv|| 0,
+    divYield:  data.divYield || 0,
+    sector:    data.sector   || '',
+    source:    'Finnhub'
+  };
 }
 
-async function fetchYahoo(ticker) {
-  const T = encodeURIComponent(ticker);
-  const [chart, summary] = await Promise.allSettled([
-    proxyFetch('https://query2.finance.yahoo.com/v8/finance/chart/'+T+'?interval=1d&range=1d'),
-    proxyFetch('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+T+'?modules=summaryDetail,assetProfile')
-  ]);
-  if (chart.status !== 'fulfilled') throw new Error('Yahoo unreachable. Check connection.');
-  const meta = chart.value?.chart?.result?.[0]?.meta;
-  if (!meta) throw new Error('Ticker "'+ticker+'" not found.');
-  const price = meta.regularMarketPrice || meta.previousClose || 0;
-  let annualDiv = 0, divYield = 0, sector = '';
-  if (summary.status === 'fulfilled') {
-    const sd = summary.value?.quoteSummary?.result?.[0]?.summaryDetail;
-    const ap = summary.value?.quoteSummary?.result?.[0]?.assetProfile;
-    if (sd) { annualDiv = sd.dividendRate?.raw || 0; divYield = (sd.dividendYield?.raw||0)*100; }
-    if (ap) sector = ap.sector || '';
-  }
-  if (!annualDiv) {
-    annualDiv = meta.trailingAnnualDividendRate || 0;
-    divYield  = (meta.trailingAnnualDividendYield||0)*100;
-  }
-  return { price, annualDiv, divYield, sector, source:'Yahoo' };
-}
-
-const MONTHLY_SET = new Set(['O','MAIN','STAG','AGNC','PSEC','ADC','EARN','NEWT','GOOD','LAND','GAIN']);
-const SEMI_SET    = new Set(['BNS','TD','RY','BMO','CM','ENB','TRP']);
+const MONTHLY_SET = new Set([
+  'O','MAIN','STAG','AGNC','PSEC','ADC','EARN','NEWT','GOOD','LAND','GAIN',
+  'JEPI','JEPQ','SPYI','QQQI','DIVO','NUSI','QYLD','RYLD','XYLD','SVOL',
+  'PBDC','GLAD','OXLC','ECC','PFLT'
+]);
+const SEMI_SET = new Set(['BNS','TD','RY','BMO','CM','ENB','TRP']);
 
 function getFrequency(ticker, sector) {
   const t = ticker.toUpperCase();
@@ -403,8 +399,8 @@ async function run() {
   $('results').classList.add('hidden');
   $('manualRow').classList.remove('show');
   try {
-    loading('Fetching '+ticker+' from Yahoo Finance\u2026');
-    let data = await fetchYahoo(ticker);
+    loading('Fetching '+ticker+'\u2026');
+    let data = await fetchFinnhub(ticker);
     let price = priceOvr || data.price;
     if (!price || price <= 0) throw new Error('No price returned. Enter a price override and try again.');
     if (!data.annualDiv || data.annualDiv <= 0) {
