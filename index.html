@@ -178,7 +178,6 @@
   <div id="calcPage">
 
     <div class="header">
-      <div class="eyebrow">// Revenue from the Internet</div>
       <h1>DRIP <em>Dividend</em><br>Calculator</h1>
       <p>Live data from Finnhub &mdash; <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding income.</p>
     </div>
@@ -236,7 +235,7 @@
 
     <!-- Results -->
     <div id="results" class="hidden">
-      <div id="srcTag" class="src-tag live">
+      <div id="srcTag" class="src-tag live hidden">
         <span class="src-dot"></span>
         <span id="srcLabel">Live &middot; Finnhub</span>
       </div>
@@ -422,7 +421,7 @@ async function run() {
     const frequency = data._freqOverride || getFrequency(ticker, data.sector);
     S = { ticker, shares, price, annualDiv: data.annualDiv, divYield: data.divYield || (data.annualDiv/price*100), frequency, sector: data.sector, dataMode:'live', source: data.source };
     renderAll();
-    setBanner('success','<span>&#9989; '+data.source+'</span><span style="margin-left:auto;color:var(--text3);font-size:11px">'+ticker+' &middot; '+fmtUSD(price)+' &middot; $'+fmt(data.annualDiv,4)+'/yr &middot; '+frequency+'</span>');
+    setBanner('success','<span>&#9989;</span><span>'+ticker+' loaded &middot; '+fmtUSD(price)+'</span>');
     $('fetchTime').textContent = 'Updated ' + new Date().toLocaleTimeString();
   } catch(e) {
     setBanner('error','<span>&#9888;&#65039;</span><span>'+e.message+'</span>');
