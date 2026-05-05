@@ -362,9 +362,11 @@ async function fetchFinnhub(ticker) {
   const res = await fetch('/api/stock?ticker='+encodeURIComponent(ticker), {
     signal: AbortSignal.timeout(12000)
   });
-  if (!res.ok) throw new Error('API error ' + res.status);
   const data = await res.json();
-  if (data.error) throw new Error(data.error);
+  // 404 = ticker not found in Finnhub — return price 0 so caller falls back to DIV_TABLE
+  if (!res.ok || data.error) {
+    return { price: 0, annualDiv: 0, divYield: 0, sector: '', source: 'Table', _notFound: true };
+  }
   return {
     price:     data.price    || 0,
     annualDiv: data.annualDiv|| 0,
@@ -402,6 +404,14 @@ async function run() {
     loading('Fetching '+ticker+'\u2026');
     let data = await fetchFinnhub(ticker);
     let price = priceOvr || data.price;
+    // If Finnhub didn't find it, check DIV_TABLE for price fallback too
+    if (data._notFound && (!price || price <= 0)) {
+      setBanner('warn','<span>&#9888;&#65039;</span><span>'+ticker+' not found in live data. Enter a price override above to continue.</span>');
+      $('manualRow').classList.add('show');
+      S.ticker = ticker; S.shares = shares;
+      $('calcBtn').disabled = false;
+      return;
+    }
     if (!price || price <= 0) throw new Error('No price returned. Enter a price override and try again.');
     if (!data.annualDiv || data.annualDiv <= 0) {
       const row = DIV_TABLE[ticker];
