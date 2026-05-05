@@ -522,8 +522,7 @@ function renderCards() {
     '<div class="card"><div class="card-lbl">Shares Owned</div><div class="card-val">'+fmt(shares,4)+'</div><div class="card-sub">'+fmtUSD(price*shares)+' invested</div></div>'+
     '<div class="card"><div class="card-lbl">Annual Div / Share</div><div class="card-val">'+fmtUSD(annualDiv)+'</div><div class="card-sub">'+(divYield>0?fmtPct(divYield)+' \u00b7 ':'')+frequency+'</div></div>'+
     '<div class="card c-green"><div class="card-lbl">Annual Income</div><div class="card-val">'+fmtUSD(annualDiv*shares)+'</div><div class="card-sub">'+fmtUSD((annualDiv/freqN)*shares)+' / period</div></div>'+
-    '<div class="card c-blue"><div class="card-lbl">Shares After 1 Yr</div><div class="card-val">'+fmt(end.totalShares,4)+'</div><div class="card-sub">+'+fmt(end.totalShares-shares,4)+' reinvested</div></div>'+
-    '<div class="card"><div class="card-lbl">Portfolio Value</div><div class="card-val">'+fmtUSD(end.val)+'</div><div class="card-sub">After 1yr DRIP</div></div>';
+    '<div class="card c-blue"><div class="card-lbl">Shares After 1 Yr</div><div class="card-val">'+fmt(end.totalShares,4)+'</div><div class="card-sub">+'+fmt(end.totalShares-shares,4)+' reinvested</div></div>';
 }
 
 function setTab(t, el) {
@@ -538,17 +537,17 @@ function renderTable() {
   const rows = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
 
   if (activeTab === 'monthly') {
-    $('tHead').innerHTML = '<tr><th>Month</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>';
+    $('tHead').innerHTML = '<tr><th>Month</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th></tr>';
     $('tBody').innerHTML = rows.map((r,i) =>
-      '<tr><td>'+MN[i]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td><td>'+fmtUSD(r.val)+'</td></tr>'
+      '<tr><td>'+MN[i]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td></tr>'
     ).join('');
   }
   else if (activeTab === 'quarterly') {
-    $('tHead').innerHTML = '<tr><th>Period</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>';
+    $('tHead').innerHTML = '<tr><th>Period</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th></tr>';
     const qs = [{l:'Q1 &mdash; JAN &middot; FEB &middot; MAR',i:[0,1,2]},{l:'Q2 &mdash; APR &middot; MAY &middot; JUN',i:[3,4,5]},{l:'Q3 &mdash; JUL &middot; AUG &middot; SEP',i:[6,7,8]},{l:'Q4 &mdash; OCT &middot; NOV &middot; DEC',i:[9,10,11]}];
     $('tBody').innerHTML = qs.map(q =>
-      '<tr class="qh"><td colspan="5">'+q.l+'</td></tr>' +
-      q.i.map(mi => { const r=rows[mi]; return '<tr><td style="padding-left:32px">'+MN[mi]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td><td>'+fmtUSD(r.val)+'</td></tr>'; }).join('')
+      '<tr class="qh"><td colspan="4">'+q.l+'</td></tr>' +
+      q.i.map(mi => { const r=rows[mi]; return '<tr><td style="padding-left:32px">'+MN[mi]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td></tr>'; }).join('')
     ).join('');
   }
   else if (activeTab === 'annual') {
@@ -566,13 +565,13 @@ function renderTable() {
   else if (activeTab === 'multiyear') {
     const years = Math.min(Math.max(parseInt($('yearsInput').value)||10, 1), 30);
     const myRows = projectMultiYear(S.shares, S.price, S.annualDiv, S.frequency, years);
-    const maxVal = myRows[myRows.length-1].portfolioValue;
+    const maxIncome = myRows[myRows.length-1].annualIncome;
 
-    $('tHead').innerHTML = '<tr><th>Year</th><th>Annual Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th><th>Total Growth</th></tr>';
+    $('tHead').innerHTML = '<tr><th>Year</th><th>Annual Income</th><th>New Shares</th><th>Total Shares</th><th>Income Growth</th></tr>';
 
     $('tBody').innerHTML = myRows.map(r => {
       const isY5 = r.year % 5 === 0;
-      const barWidth = Math.max(Math.round((r.portfolioValue / maxVal) * 80), 2);
+      const barWidth = Math.max(Math.round((r.annualIncome / maxIncome) * 80), 2);
       let milestone = '';
       if (r.year > 1) {
         if (r.incomeVsBase >= 100) milestone = '<span class="milestone">2&times; income</span>';
@@ -583,8 +582,7 @@ function renderTable() {
         '<td class="pos">'+fmtUSD(r.annualIncome)+'</td>'+
         '<td class="acc">+'+fmt(r.newShares,4)+'</td>'+
         '<td>'+fmt(r.sharesEnd,4)+'</td>'+
-        '<td>'+fmtUSD(r.portfolioValue)+'</td>'+
-        '<td><div class="growth-bar-wrap"><div class="growth-bar" style="width:'+barWidth+'px"></div><span class="growth-pct">+'+fmt(r.totalGrowthPct,1)+'%</span></div></td>'+
+        '<td><div class="growth-bar-wrap"><div class="growth-bar" style="width:'+barWidth+'px"></div><span class="growth-pct">+'+fmt(r.incomeVsBase,1)+'%</span></div></td>'+
         '</tr>';
     }).join('') +
     '<tr class="total">'+
@@ -592,8 +590,7 @@ function renderTable() {
       '<td class="pos">'+fmtUSD(myRows.reduce((s,r)=>s+r.annualIncome,0))+'</td>'+
       '<td class="acc">+'+fmt(myRows[myRows.length-1].sharesEnd - S.shares, 4)+'</td>'+
       '<td>'+fmt(myRows[myRows.length-1].sharesEnd,4)+'</td>'+
-      '<td>'+fmtUSD(myRows[myRows.length-1].portfolioValue)+'</td>'+
-      '<td><span class="growth-pct">+'+fmt(myRows[myRows.length-1].totalGrowthPct,1)+'%</span></td>'+
+      '<td><span class="growth-pct">+'+fmt(myRows[myRows.length-1].incomeVsBase,1)+'%</span></td>'+
     '</tr>';
   }
 }
