@@ -35,8 +35,8 @@
   .header p strong { color:var(--accent3); font-weight:500; }
 
   /* INPUTS */
-  .input-panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:16px; display:grid; grid-template-columns:2fr 2fr 2fr 1.2fr; gap:20px; align-items:end; }
-  @media(max-width:640px){ .input-panel { grid-template-columns:1fr 1fr; } }
+  .input-panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:16px; display:grid; grid-template-columns:2fr 2fr 2fr 1fr 1.2fr; gap:20px; align-items:end; }
+  @media(max-width:700px){ .input-panel { grid-template-columns:1fr 1fr; } }
   .fg { display:flex; flex-direction:column; gap:6px; }
   .fg label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); }
   input, select { background:var(--bg); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; width:100%; outline:none; transition:border-color 0.15s, box-shadow 0.15s; appearance:none; }
@@ -114,6 +114,18 @@
   tr.total { background:var(--surface2) !important; border-top:1px solid var(--border2); }
   tr.total td:first-child { color:var(--accent); font-weight:600; }
 
+  /* MULTI-YEAR GROWTH BAR */
+  .growth-bar-wrap { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+  .growth-bar { height:4px; border-radius:2px; background:var(--accent); opacity:0.7; min-width:2px; }
+  .growth-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); min-width:52px; text-align:right; }
+
+  /* MILESTONE BADGE */
+  .milestone { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:rgba(200,240,110,0.1); color:var(--accent); border:1px solid rgba(200,240,110,0.2); margin-left:8px; vertical-align:middle; }
+
+  /* EVERY 5 YEARS HIGHLIGHT */
+  tr.yr5 { background:rgba(200,240,110,0.025) !important; }
+  tr.yr5 td:first-child { color:var(--accent) !important; }
+
   /* CALENDAR PAGE */
   .cal-intro { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:28px; }
   .cal-intro h2 { font-family:'DM Serif Display',serif; font-size:26px; font-weight:400; margin-bottom:8px; }
@@ -158,23 +170,23 @@
 
   <!-- PAGE NAV -->
   <div class="page-nav">
-    <button class="nav-btn active" id="navCalc" onclick="showPage('calc')">⚡ DRIP Calculator</button>
-    <button class="nav-btn" id="navCal" onclick="showPage('cal')">📅 Fill My Calendar</button>
+    <button class="nav-btn active" id="navCalc" onclick="showPage('calc')">&#9889; DRIP Calculator</button>
+    <button class="nav-btn" id="navCal" onclick="showPage('cal')">&#128197; Fill My Calendar</button>
   </div>
 
-  <!-- ═══ CALCULATOR PAGE ═══════════════════════════════════════════════════ -->
+  <!-- CALCULATOR PAGE -->
   <div id="calcPage">
 
     <div class="header">
       <div class="eyebrow">// Revenue from the Internet</div>
       <h1>DRIP <em>Dividend</em><br>Calculator</h1>
-      <p>Live data from Finnhub — <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding income.</p>
+      <p>Live data from Finnhub &mdash; <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding income.</p>
     </div>
 
     <div class="input-panel">
       <div class="fg">
         <label>Ticker Symbol</label>
-        <input type="text" id="ticker" placeholder="SBUX, O, JNJ…" autocomplete="off">
+        <input type="text" id="ticker" placeholder="SBUX, O, JNJ&hellip;" autocomplete="off">
       </div>
       <div class="fg">
         <label>Shares Owned</label>
@@ -182,7 +194,11 @@
       </div>
       <div class="fg">
         <label>Price Override <span style="color:var(--text3);font-size:9px">(optional)</span></label>
-        <input type="number" id="priceOvr" placeholder="Auto from Yahoo" min="0.01" step="0.01">
+        <input type="number" id="priceOvr" placeholder="Auto from API" min="0.01" step="0.01">
+      </div>
+      <div class="fg">
+        <label>Years <span style="color:var(--text3);font-size:9px">(multi-yr)</span></label>
+        <input type="number" id="yearsInput" placeholder="10" min="1" max="30" step="1" value="10">
       </div>
       <div class="fg">
         <label>&nbsp;</label>
@@ -192,7 +208,7 @@
 
     <!-- Manual fallback -->
     <div class="manual-row" id="manualRow">
-      <div class="manual-label">⚠ No dividend data found — enter manually to continue</div>
+      <div class="manual-label">&#9888; No dividend data found &mdash; enter manually to continue</div>
       <div class="fg">
         <label>Annual Div / Share ($)</label>
         <input type="number" id="manualDiv" placeholder="e.g. 2.44" min="0" step="0.01">
@@ -214,7 +230,7 @@
 
     <!-- Status banner -->
     <div id="banner" class="banner banner-hint">
-      <span>💡</span>
+      <span>&#128161;</span>
       <span>Enter a ticker &amp; shares, then hit Calculate. Fractional shares fully supported.</span>
     </div>
 
@@ -222,7 +238,7 @@
     <div id="results" class="hidden">
       <div id="srcTag" class="src-tag live">
         <span class="src-dot"></span>
-        <span id="srcLabel">Live · Yahoo Finance</span>
+        <span id="srcLabel">Live &middot; Finnhub</span>
       </div>
       <div class="cards" id="cards"></div>
       <div class="tabs-row">
@@ -230,8 +246,9 @@
           <button class="tab active" onclick="setTab('monthly',this)">Monthly</button>
           <button class="tab" onclick="setTab('quarterly',this)">Quarterly</button>
           <button class="tab" onclick="setTab('annual',this)">Full Year</button>
+          <button class="tab" onclick="setTab('multiyear',this)">&#128200; Multi-Year</button>
         </div>
-        <button class="btn btn-export" onclick="exportCSV()">⬇ Download CSV</button>
+        <button class="btn btn-export" onclick="exportCSV()">&#8595; Download CSV</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -243,12 +260,12 @@
 
   </div><!-- end calcPage -->
 
-  <!-- ═══ CALENDAR PAGE ════════════════════════════════════════════════════ -->
+  <!-- CALENDAR PAGE -->
   <div id="calPage" class="hidden">
 
     <div class="cal-intro">
       <h2>Fill My <em>Dividend Calendar</em></h2>
-      <p>Select the months where your income is light. We'll show you stocks and ETFs that pay in exactly those months — so you build a smooth, consistent income stream all year round.</p>
+      <p>Select the months where your income is light. We'll show you stocks and ETFs that pay in exactly those months &mdash; so you build a smooth, consistent income stream all year round.</p>
     </div>
 
     <div style="margin-bottom:8px">
@@ -267,14 +284,14 @@
   </div><!-- end calPage -->
 
   <div class="footer">
-    <span>Revenue from the Internet · DRIP Calc · Finnhub</span>
+    <span>Revenue from the Internet &middot; DRIP Calc &middot; Finnhub</span>
     <span id="fetchTime"></span>
   </div>
 
 </div>
 
 <script>
-// ── STATE ─────────────────────────────────────────────────────────────────────
+// STATE
 let S = { ticker:'', shares:0, price:0, annualDiv:0, divYield:0, frequency:'quarterly', sector:'', dataMode:'', source:'' };
 let activeTab = 'monthly';
 let selMonths = new Set();
@@ -284,7 +301,6 @@ const fmt    = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maxi
 const fmtUSD = n => '$'+fmt(n);
 const fmtPct = n => fmt(n,2)+'%';
 
-// ── PAGE SWITCH ───────────────────────────────────────────────────────────────
 function showPage(p) {
   $('calcPage').classList.toggle('hidden', p !== 'calc');
   $('calPage').classList.toggle('hidden',  p !== 'cal');
@@ -293,15 +309,13 @@ function showPage(p) {
   if (p === 'cal') renderMoGrid();
 }
 
-// ── BANNER ────────────────────────────────────────────────────────────────────
 function setBanner(type, html) {
   const b = $('banner');
   b.className = 'banner banner-' + type;
   b.innerHTML = html;
 }
-function loading(msg) { setBanner('loading', `<div class="spinner"></div><span>${msg}</span>`); }
+function loading(msg) { setBanner('loading', '<div class="spinner"></div><span>'+msg+'</span>'); }
 
-// ── DATA: DIVIDEND LOOKUP TABLE ───────────────────────────────────────────────
 const DIV_TABLE = {
   'AAPL':[1.00,'quarterly'],'MSFT':[3.32,'quarterly'],'JNJ':[4.96,'quarterly'],
   'PG':[3.97,'quarterly'],'KO':[1.94,'quarterly'],'PEP':[5.42,'quarterly'],
@@ -336,9 +350,8 @@ const DIV_TABLE = {
   'VLO':[4.40,'quarterly'],'PSX':[4.40,'quarterly'],
 };
 
-// ── DATA: FETCH ───────────────────────────────────────────────────────────────
 async function proxyFetch(url) {
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const proxy = 'https://api.allorigins.win/get?url='+encodeURIComponent(url);
   const res = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error('Proxy error ' + res.status);
   const outer = await res.json();
@@ -349,17 +362,14 @@ async function proxyFetch(url) {
 async function fetchYahoo(ticker) {
   const T = encodeURIComponent(ticker);
   const [chart, summary] = await Promise.allSettled([
-    proxyFetch(`https://query2.finance.yahoo.com/v8/finance/chart/${T}?interval=1d&range=1d`),
-    proxyFetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${T}?modules=summaryDetail,assetProfile`)
+    proxyFetch('https://query2.finance.yahoo.com/v8/finance/chart/'+T+'?interval=1d&range=1d'),
+    proxyFetch('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+T+'?modules=summaryDetail,assetProfile')
   ]);
-
   if (chart.status !== 'fulfilled') throw new Error('Yahoo unreachable. Check connection.');
   const meta = chart.value?.chart?.result?.[0]?.meta;
-  if (!meta) throw new Error(`Ticker "${ticker}" not found.`);
-
+  if (!meta) throw new Error('Ticker "'+ticker+'" not found.');
   const price = meta.regularMarketPrice || meta.previousClose || 0;
   let annualDiv = 0, divYield = 0, sector = '';
-
   if (summary.status === 'fulfilled') {
     const sd = summary.value?.quoteSummary?.result?.[0]?.summaryDetail;
     const ap = summary.value?.quoteSummary?.result?.[0]?.assetProfile;
@@ -384,57 +394,38 @@ function getFrequency(ticker, sector) {
   return 'quarterly';
 }
 
-// ── MAIN RUN ──────────────────────────────────────────────────────────────────
 async function run() {
-  const ticker  = $('ticker').value.trim().toUpperCase();
-  const shares  = parseFloat($('shares').value);
+  const ticker   = $('ticker').value.trim().toUpperCase();
+  const shares   = parseFloat($('shares').value);
   const priceOvr = parseFloat($('priceOvr').value) || 0;
-
-  if (!ticker) return setBanner('error','<span>⚠️</span><span>Enter a ticker symbol.</span>');
-  if (!shares || shares <= 0) return setBanner('error','<span>⚠️</span><span>Enter the number of shares you own.</span>');
-
+  if (!ticker) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter a ticker symbol.</span>');
+  if (!shares || shares <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter the number of shares you own.</span>');
   $('calcBtn').disabled = true;
   $('results').classList.add('hidden');
   $('manualRow').classList.remove('show');
-
   try {
-    loading(`Fetching ${ticker} from Yahoo Finance…`);
+    loading('Fetching '+ticker+' from Yahoo Finance\u2026');
     let data = await fetchYahoo(ticker);
     let price = priceOvr || data.price;
-
     if (!price || price <= 0) throw new Error('No price returned. Enter a price override and try again.');
-
-    // If no dividend from Yahoo, check table
     if (!data.annualDiv || data.annualDiv <= 0) {
       const row = DIV_TABLE[ticker];
-      if (row) {
-        data.annualDiv = row[0];
-        data.source    = 'Yahoo + Table';
-        // infer frequency from table
-        data._freqOverride = row[1];
-      }
+      if (row) { data.annualDiv = row[0]; data.source = 'Yahoo + Table'; data._freqOverride = row[1]; }
     }
-
     if (!data.annualDiv || data.annualDiv <= 0) {
-      setBanner('warn', `<span>⚠️</span><span>${ticker} — price $${fmt(price,2)} fetched but no dividend data found. Enter it manually below.</span>`);
+      setBanner('warn','<span>&#9888;&#65039;</span><span>'+ticker+' \u2014 price $'+fmt(price,2)+' fetched but no dividend data found. Enter it manually below.</span>');
       $('manualRow').classList.add('show');
       S.ticker = ticker; S.shares = shares; S.price = price;
       $('calcBtn').disabled = false;
       return;
     }
-
     const frequency = data._freqOverride || getFrequency(ticker, data.sector);
     S = { ticker, shares, price, annualDiv: data.annualDiv, divYield: data.divYield || (data.annualDiv/price*100), frequency, sector: data.sector, dataMode:'live', source: data.source };
-
     renderAll();
-    setBanner('success',
-      `<span>✅ ${data.source}</span>` +
-      `<span style="margin-left:auto;color:var(--text3);font-size:11px">${ticker} · ${fmtUSD(price)} · $${fmt(data.annualDiv,4)}/yr · ${frequency}</span>`
-    );
+    setBanner('success','<span>&#9989; '+data.source+'</span><span style="margin-left:auto;color:var(--text3);font-size:11px">'+ticker+' &middot; '+fmtUSD(price)+' &middot; $'+fmt(data.annualDiv,4)+'/yr &middot; '+frequency+'</span>');
     $('fetchTime').textContent = 'Updated ' + new Date().toLocaleTimeString();
-
   } catch(e) {
-    setBanner('error', `<span>⚠️</span><span>${e.message}</span>`);
+    setBanner('error','<span>&#9888;&#65039;</span><span>'+e.message+'</span>');
     $('manualRow').classList.add('show');
     S.ticker = $('ticker').value.trim().toUpperCase();
     S.shares = shares;
@@ -443,24 +434,20 @@ async function run() {
   $('calcBtn').disabled = false;
 }
 
-// ── MANUAL ────────────────────────────────────────────────────────────────────
 function runManual() {
   const ticker    = $('ticker').value.trim().toUpperCase() || 'TICKER';
   const shares    = parseFloat($('shares').value);
   const price     = parseFloat($('priceOvr').value) || S.price || 0;
   const annualDiv = parseFloat($('manualDiv').value) || 0;
   const frequency = $('manualFreq').value;
-
-  if (!shares || shares <= 0) return setBanner('error','<span>⚠️</span><span>Enter shares owned.</span>');
-  if (!price  || price  <= 0) return setBanner('error','<span>⚠️</span><span>Enter a price override — required for manual mode.</span>');
-  if (!annualDiv || annualDiv <= 0) return setBanner('error','<span>⚠️</span><span>Enter the annual dividend per share.</span>');
-
+  if (!shares || shares <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter shares owned.</span>');
+  if (!price  || price  <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter a price override \u2014 required for manual mode.</span>');
+  if (!annualDiv || annualDiv <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter the annual dividend per share.</span>');
   S = { ticker, shares, price, annualDiv, divYield:(annualDiv/price*100), frequency, sector:'', dataMode:'manual', source:'Manual' };
   renderAll();
-  setBanner('warn','<span>📝</span><span>Using manually entered dividend data.</span>');
+  setBanner('warn','<span>&#128221;</span><span>Using manually entered dividend data.</span>');
 }
 
-// ── PROJECTION ────────────────────────────────────────────────────────────────
 function project(startShares, price, annualDiv, frequency, months) {
   const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[frequency]||4;
   const divPerPeriod = annualDiv / freqN;
@@ -478,10 +465,42 @@ function project(startShares, price, annualDiv, frequency, months) {
   return rows;
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
+function projectMultiYear(startShares, price, annualDiv, frequency, years) {
+  const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[frequency]||4;
+  const divPerPeriod = annualDiv / freqN;
+  const mPerPeriod   = 12 / freqN;
+  let totalShares = startShares;
+  const baseIncome = annualDiv * startShares;
+  let rows = [];
+  for (let yr = 1; yr <= years; yr++) {
+    let yearDiv = 0, yearNewShares = 0;
+    const sharesAtStart = totalShares;
+    for (let m = 1; m <= 12; m++) {
+      if (freqN === 12 || m % mPerPeriod === 0) {
+        const div = totalShares * divPerPeriod;
+        const ns  = div / price;
+        yearDiv += div;
+        yearNewShares += ns;
+        totalShares += ns;
+      }
+    }
+    rows.push({
+      year: yr,
+      sharesStart: sharesAtStart,
+      annualIncome: yearDiv,
+      newShares: yearNewShares,
+      sharesEnd: totalShares,
+      portfolioValue: totalShares * price,
+      totalGrowthPct: ((totalShares - startShares) / startShares) * 100,
+      incomeVsBase: ((yearDiv / baseIncome) - 1) * 100
+    });
+  }
+  return rows;
+}
+
 function renderAll() {
   const tag = $('srcTag'), lbl = $('srcLabel');
-  if (S.dataMode === 'live') { tag.className='src-tag live'; lbl.textContent='Live · '+S.source; }
+  if (S.dataMode === 'live') { tag.className='src-tag live'; lbl.textContent='Live \u00b7 '+S.source; }
   else { tag.className='src-tag manual'; lbl.textContent='Manual Entry'; }
   renderCards();
   renderTable();
@@ -493,13 +512,13 @@ function renderCards() {
   const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[frequency]||4;
   const rows  = project(shares, price, annualDiv, frequency, 12);
   const end   = rows[11];
-  $('cards').innerHTML = `
-    <div class="card c-accent"><div class="card-lbl">Share Price</div><div class="card-val">${fmtUSD(price)}</div><div class="card-sub">${ticker}${sector?' · '+sector:''}</div></div>
-    <div class="card"><div class="card-lbl">Shares Owned</div><div class="card-val">${fmt(shares,4)}</div><div class="card-sub">${fmtUSD(price*shares)} invested</div></div>
-    <div class="card"><div class="card-lbl">Annual Div / Share</div><div class="card-val">${fmtUSD(annualDiv)}</div><div class="card-sub">${divYield>0?fmtPct(divYield)+' · ':''}${frequency}</div></div>
-    <div class="card c-green"><div class="card-lbl">Annual Income</div><div class="card-val">${fmtUSD(annualDiv*shares)}</div><div class="card-sub">${fmtUSD((annualDiv/freqN)*shares)} / period</div></div>
-    <div class="card c-blue"><div class="card-lbl">Shares After 1 Yr</div><div class="card-val">${fmt(end.totalShares,4)}</div><div class="card-sub">+${fmt(end.totalShares-shares,4)} reinvested</div></div>
-    <div class="card"><div class="card-lbl">Portfolio Value</div><div class="card-val">${fmtUSD(end.val)}</div><div class="card-sub">After 1yr DRIP</div></div>`;
+  $('cards').innerHTML =
+    '<div class="card c-accent"><div class="card-lbl">Share Price</div><div class="card-val">'+fmtUSD(price)+'</div><div class="card-sub">'+ticker+(sector?' \u00b7 '+sector:'')+'</div></div>'+
+    '<div class="card"><div class="card-lbl">Shares Owned</div><div class="card-val">'+fmt(shares,4)+'</div><div class="card-sub">'+fmtUSD(price*shares)+' invested</div></div>'+
+    '<div class="card"><div class="card-lbl">Annual Div / Share</div><div class="card-val">'+fmtUSD(annualDiv)+'</div><div class="card-sub">'+(divYield>0?fmtPct(divYield)+' \u00b7 ':'')+frequency+'</div></div>'+
+    '<div class="card c-green"><div class="card-lbl">Annual Income</div><div class="card-val">'+fmtUSD(annualDiv*shares)+'</div><div class="card-sub">'+fmtUSD((annualDiv/freqN)*shares)+' / period</div></div>'+
+    '<div class="card c-blue"><div class="card-lbl">Shares After 1 Yr</div><div class="card-val">'+fmt(end.totalShares,4)+'</div><div class="card-sub">+'+fmt(end.totalShares-shares,4)+' reinvested</div></div>'+
+    '<div class="card"><div class="card-lbl">Portfolio Value</div><div class="card-val">'+fmtUSD(end.val)+'</div><div class="card-sub">After 1yr DRIP</div></div>';
 }
 
 function setTab(t, el) {
@@ -514,79 +533,107 @@ function renderTable() {
   const rows = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
 
   if (activeTab === 'monthly') {
-    $('tHead').innerHTML = `<tr><th>Month</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>`;
-    $('tBody').innerHTML = rows.map((r,i) => `<tr>
-      <td>${MN[i]}</td>
-      <td class="${r.div>0?'pos':''}">${r.div>0?fmtUSD(r.div):'—'}</td>
-      <td class="${r.ns>0?'acc':''}">${r.ns>0?'+'+fmt(r.ns,4):'—'}</td>
-      <td>${fmt(r.totalShares,4)}</td>
-      <td>${fmtUSD(r.val)}</td>
-    </tr>`).join('');
-  }
-  else if (activeTab === 'quarterly') {
-    $('tHead').innerHTML = `<tr><th>Period</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>`;
-    const qs = [{l:'Q1 — JAN · FEB · MAR',i:[0,1,2]},{l:'Q2 — APR · MAY · JUN',i:[3,4,5]},{l:'Q3 — JUL · AUG · SEP',i:[6,7,8]},{l:'Q4 — OCT · NOV · DEC',i:[9,10,11]}];
-    $('tBody').innerHTML = qs.map(q =>
-      `<tr class="qh"><td colspan="5">${q.l}</td></tr>` +
-      q.i.map(mi => { const r=rows[mi]; return `<tr>
-        <td style="padding-left:32px">${MN[mi]}</td>
-        <td class="${r.div>0?'pos':''}">${r.div>0?fmtUSD(r.div):'—'}</td>
-        <td class="${r.ns>0?'acc':''}">${r.ns>0?'+'+fmt(r.ns,4):'—'}</td>
-        <td>${fmt(r.totalShares,4)}</td><td>${fmtUSD(r.val)}</td>
-      </tr>`; }).join('')
+    $('tHead').innerHTML = '<tr><th>Month</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>';
+    $('tBody').innerHTML = rows.map((r,i) =>
+      '<tr><td>'+MN[i]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td><td>'+fmtUSD(r.val)+'</td></tr>'
     ).join('');
   }
-  else {
-    $('tHead').innerHTML = `<tr><th>Quarter</th><th>Div Income</th><th>New Shares</th><th>Shares Cumul.</th><th>% of Annual</th></tr>`;
+  else if (activeTab === 'quarterly') {
+    $('tHead').innerHTML = '<tr><th>Period</th><th>Div Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th></tr>';
+    const qs = [{l:'Q1 &mdash; JAN &middot; FEB &middot; MAR',i:[0,1,2]},{l:'Q2 &mdash; APR &middot; MAY &middot; JUN',i:[3,4,5]},{l:'Q3 &mdash; JUL &middot; AUG &middot; SEP',i:[6,7,8]},{l:'Q4 &mdash; OCT &middot; NOV &middot; DEC',i:[9,10,11]}];
+    $('tBody').innerHTML = qs.map(q =>
+      '<tr class="qh"><td colspan="5">'+q.l+'</td></tr>' +
+      q.i.map(mi => { const r=rows[mi]; return '<tr><td style="padding-left:32px">'+MN[mi]+'</td><td class="'+(r.div>0?'pos':'')+'">'+(r.div>0?fmtUSD(r.div):'&mdash;')+'</td><td class="'+(r.ns>0?'acc':'')+'">'+(r.ns>0?'+'+fmt(r.ns,4):'&mdash;')+'</td><td>'+fmt(r.totalShares,4)+'</td><td>'+fmtUSD(r.val)+'</td></tr>'; }).join('')
+    ).join('');
+  }
+  else if (activeTab === 'annual') {
+    $('tHead').innerHTML = '<tr><th>Quarter</th><th>Div Income</th><th>New Shares</th><th>Shares Cumul.</th><th>% of Annual</th></tr>';
     const qs = [{l:'Q1',i:[0,1,2]},{l:'Q2',i:[3,4,5]},{l:'Q3',i:[6,7,8]},{l:'Q4',i:[9,10,11]}];
     const total = rows.reduce((s,r)=>s+r.div,0);
     $('tBody').innerHTML = qs.map(q => {
       const inc = q.i.reduce((s,i)=>s+rows[i].div,0);
       const ns  = q.i.reduce((s,i)=>s+rows[i].ns,0);
       const end = rows[q.i[2]];
-      return `<tr><td>${q.l}</td><td class="pos">${fmtUSD(inc)}</td><td class="acc">+${fmt(ns,4)}</td><td>${fmt(end.totalShares,4)}</td><td>${total>0?fmtPct(inc/total*100):'—'}</td></tr>`;
+      return '<tr><td>'+q.l+'</td><td class="pos">'+fmtUSD(inc)+'</td><td class="acc">+'+fmt(ns,4)+'</td><td>'+fmt(end.totalShares,4)+'</td><td>'+(total>0?fmtPct(inc/total*100):'&mdash;')+'</td></tr>';
     }).join('') +
-    `<tr class="total"><td>Full Year</td><td class="pos">${fmtUSD(total)}</td><td class="acc">+${fmt(rows[11].totalShares-S.shares,4)}</td><td>${fmt(rows[11].totalShares,4)}</td><td style="color:var(--text2)">100%</td></tr>`;
+    '<tr class="total"><td>Full Year</td><td class="pos">'+fmtUSD(total)+'</td><td class="acc">+'+fmt(rows[11].totalShares-S.shares,4)+'</td><td>'+fmt(rows[11].totalShares,4)+'</td><td style="color:var(--text2)">100%</td></tr>';
+  }
+  else if (activeTab === 'multiyear') {
+    const years = Math.min(Math.max(parseInt($('yearsInput').value)||10, 1), 30);
+    const myRows = projectMultiYear(S.shares, S.price, S.annualDiv, S.frequency, years);
+    const maxVal = myRows[myRows.length-1].portfolioValue;
+
+    $('tHead').innerHTML = '<tr><th>Year</th><th>Annual Income</th><th>New Shares</th><th>Total Shares</th><th>Portfolio Value</th><th>Total Growth</th></tr>';
+
+    $('tBody').innerHTML = myRows.map(r => {
+      const isY5 = r.year % 5 === 0;
+      const barWidth = Math.max(Math.round((r.portfolioValue / maxVal) * 80), 2);
+      let milestone = '';
+      if (r.year > 1) {
+        if (r.incomeVsBase >= 100) milestone = '<span class="milestone">2&times; income</span>';
+        else if (r.incomeVsBase >= 50) milestone = '<span class="milestone">+50% income</span>';
+      }
+      return '<tr class="'+(isY5?'yr5':'')+'">'+
+        '<td>Yr '+r.year+milestone+'</td>'+
+        '<td class="pos">'+fmtUSD(r.annualIncome)+'</td>'+
+        '<td class="acc">+'+fmt(r.newShares,4)+'</td>'+
+        '<td>'+fmt(r.sharesEnd,4)+'</td>'+
+        '<td>'+fmtUSD(r.portfolioValue)+'</td>'+
+        '<td><div class="growth-bar-wrap"><div class="growth-bar" style="width:'+barWidth+'px"></div><span class="growth-pct">+'+fmt(r.totalGrowthPct,1)+'%</span></div></td>'+
+        '</tr>';
+    }).join('') +
+    '<tr class="total">'+
+      '<td>'+years+'yr Total</td>'+
+      '<td class="pos">'+fmtUSD(myRows.reduce((s,r)=>s+r.annualIncome,0))+'</td>'+
+      '<td class="acc">+'+fmt(myRows[myRows.length-1].sharesEnd - S.shares, 4)+'</td>'+
+      '<td>'+fmt(myRows[myRows.length-1].sharesEnd,4)+'</td>'+
+      '<td>'+fmtUSD(myRows[myRows.length-1].portfolioValue)+'</td>'+
+      '<td><span class="growth-pct">+'+fmt(myRows[myRows.length-1].totalGrowthPct,1)+'%</span></td>'+
+    '</tr>';
   }
 }
 
-// ── CSV EXPORT ────────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!S.price || !S.annualDiv) return;
-  const rows  = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
-  const end   = rows[11];
-  const freqN = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[S.frequency]||4;
-  const MN    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const rows   = project(S.shares, S.price, S.annualDiv, S.frequency, 12);
+  const end    = rows[11];
+  const freqN  = {monthly:12,quarterly:4,'semi-annual':2,annual:1}[S.frequency]||4;
+  const MN     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const years  = Math.min(Math.max(parseInt($('yearsInput').value)||10, 1), 30);
+  const myRows = projectMultiYear(S.shares, S.price, S.annualDiv, S.frequency, years);
 
-  let csv = `DRIP DIVIDEND CALCULATOR EXPORT\nGenerated,${new Date().toLocaleDateString()}\nTicker,${S.ticker}\nData Source,${S.source}\n\n`;
-  csv += `=== SUMMARY ===\n`;
-  csv += `Share Price,$${fmt(S.price,2)}\nShares Owned,${fmt(S.shares,4)}\nAnnual Div/Share,$${fmt(S.annualDiv,4)}\n`;
-  csv += `Dividend Yield,${S.divYield>0?fmtPct(S.divYield):'N/A'}\nPayout Frequency,${S.frequency}\n`;
-  csv += `Annual Income,$${fmt(S.annualDiv*S.shares,2)}\nIncome Per Period,$${fmt((S.annualDiv/freqN)*S.shares,2)}\n`;
-  csv += `Shares After 1 Year,${fmt(end.totalShares,4)}\nNew Shares Reinvested,${fmt(end.totalShares-S.shares,4)}\n`;
-  csv += `Portfolio Value After 1 Year,$${fmt(end.val,2)}\n\n`;
-  csv += `=== MONTHLY PROJECTION ===\nMonth,Shares Start,Div Income,New Shares,Portfolio Value\n`;
+  let csv = 'DRIP DIVIDEND CALCULATOR EXPORT\nGenerated,'+new Date().toLocaleDateString()+'\nTicker,'+S.ticker+'\nData Source,'+S.source+'\n\n';
+  csv += '=== SUMMARY ===\n';
+  csv += 'Share Price,$'+fmt(S.price,2)+'\nShares Owned,'+fmt(S.shares,4)+'\nAnnual Div/Share,$'+fmt(S.annualDiv,4)+'\n';
+  csv += 'Dividend Yield,'+(S.divYield>0?fmtPct(S.divYield):'N/A')+'\nPayout Frequency,'+S.frequency+'\n';
+  csv += 'Annual Income,$'+fmt(S.annualDiv*S.shares,2)+'\nIncome Per Period,$'+fmt((S.annualDiv/freqN)*S.shares,2)+'\n';
+  csv += 'Shares After 1 Year,'+fmt(end.totalShares,4)+'\nNew Shares Reinvested,'+fmt(end.totalShares-S.shares,4)+'\n';
+  csv += 'Portfolio Value After 1 Year,$'+fmt(end.val,2)+'\n\n';
+  csv += '=== MONTHLY PROJECTION ===\nMonth,Shares Start,Div Income,New Shares,Portfolio Value\n';
   rows.forEach((r,i) => {
-    csv += `${MN[i]},${fmt(r.totalShares-r.ns,4)},${r.div>0?'$'+fmt(r.div,2):''},${r.ns>0?'+'+fmt(r.ns,4):''},$${fmt(r.val,2)}\n`;
+    csv += MN[i]+','+fmt(r.totalShares-r.ns,4)+','+(r.div>0?'$'+fmt(r.div,2):'')+','+(r.ns>0?'+'+fmt(r.ns,4):'')+',$ '+fmt(r.val,2)+'\n';
   });
-  csv += `\n=== QUARTERLY SUMMARY ===\nQuarter,Div Income,New Shares,Shares End,Portfolio Value\n`;
+  csv += '\n=== QUARTERLY SUMMARY ===\nQuarter,Div Income,New Shares,Shares End,Portfolio Value\n';
   [{l:'Q1',i:[0,1,2]},{l:'Q2',i:[3,4,5]},{l:'Q3',i:[6,7,8]},{l:'Q4',i:[9,10,11]}].forEach(q => {
     const inc=q.i.reduce((s,i)=>s+rows[i].div,0), ns=q.i.reduce((s,i)=>s+rows[i].ns,0), e=rows[q.i[2]];
-    csv += `${q.l},$${fmt(inc,2)},+${fmt(ns,4)},${fmt(e.totalShares,4)},$${fmt(e.val,2)}\n`;
+    csv += q.l+',$'+fmt(inc,2)+',+'+fmt(ns,4)+','+fmt(e.totalShares,4)+',$'+fmt(e.val,2)+'\n';
   });
+  csv += '\n=== '+years+'-YEAR MULTI-YEAR PROJECTION ===\nYear,Annual Income,New Shares,Total Shares,Portfolio Value,Total Growth %\n';
+  myRows.forEach(r => {
+    csv += 'Year '+r.year+',$'+fmt(r.annualIncome,2)+',+'+fmt(r.newShares,4)+','+fmt(r.sharesEnd,4)+',$'+fmt(r.portfolioValue,2)+',+'+fmt(r.totalGrowthPct,1)+'%\n';
+  });
+
   const blob = new Blob([csv],{type:'text/csv'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `DRIP-${S.ticker}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = 'DRIP-'+S.ticker+'-'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
 
-// ── CALENDAR ──────────────────────────────────────────────────────────────────
+// CALENDAR
 const MN_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
 const STOCK_DB = [
-  // Cycle B — Feb·May·Aug·Nov
   {t:'TGT', n:'Target',              y:3.4, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
   {t:'WMT', n:'Walmart',             y:1.1, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
   {t:'COST',n:'Costco',              y:0.8, s:'Retail',     f:'quarterly', pay:[2,5,8,11]},
@@ -625,7 +672,6 @@ const STOCK_DB = [
   {t:'VYM', n:'Vanguard High Div',   y:2.9, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
   {t:'DVY', n:'iShares Div Select',  y:3.8, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
   {t:'HDV', n:'iShares Core Div',    y:3.5, s:'ETF',        f:'quarterly', pay:[2,5,8,11]},
-  // Cycle C — Mar·Jun·Sep·Dec
   {t:'JNJ', n:'Johnson & Johnson',   y:3.2, s:'Healthcare', f:'quarterly', pay:[3,6,9,12]},
   {t:'PG',  n:'Procter & Gamble',    y:2.5, s:'Consumer',   f:'quarterly', pay:[3,6,9,12]},
   {t:'KO',  n:'Coca-Cola',           y:3.1, s:'Beverages',  f:'quarterly', pay:[3,6,9,12]},
@@ -664,7 +710,6 @@ const STOCK_DB = [
   {t:'SCHD',n:'Schwab US Div Equity',y:3.6, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
   {t:'VIG', n:'Vanguard Div Apprec', y:1.8, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
   {t:'DGRO',n:'iShares Div Growth',  y:2.4, s:'ETF',        f:'quarterly', pay:[3,6,9,12]},
-  // Monthly payers — all 12 months
   {t:'O',   n:'Realty Income',       y:5.6, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {t:'MAIN',n:'Main Street Capital', y:6.8, s:'BDC',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {t:'STAG',n:'STAG Industrial',     y:4.2, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
@@ -676,7 +721,7 @@ const STOCK_DB = [
 function renderMoGrid() {
   $('moGrid').innerHTML = MN_SHORT.map((m,i) => {
     const mo = i+1;
-    return `<button class="mo-btn ${selMonths.has(mo)?'sel':''}" onclick="toggleMo(${mo})">${m}</button>`;
+    return '<button class="mo-btn '+(selMonths.has(mo)?'sel':'')+'" onclick="toggleMo('+mo+')">'+m+'</button>';
   }).join('');
 }
 
@@ -695,44 +740,22 @@ function findFillers() {
   if (selMonths.size === 0) { alert('Select at least one gap month first.'); return; }
   const gaps = Array.from(selMonths).sort((a,b)=>a-b);
   const matches = STOCK_DB.filter(s => gaps.every(mo => s.pay.includes(mo)));
-
   if (matches.length === 0) {
-    $('calResults').innerHTML = `<div class="banner banner-warn"><span>⚠️</span><span>No stocks found for that combination. Try selecting fewer months.</span></div>`;
+    $('calResults').innerHTML = '<div class="banner banner-warn"><span>&#9888;&#65039;</span><span>No stocks found for that combination. Try selecting fewer months.</span></div>';
     return;
   }
-
   const byMonth = {};
   gaps.forEach(mo => { byMonth[mo] = []; });
   matches.forEach(s => gaps.forEach(mo => { if (s.pay.includes(mo)) byMonth[mo].push(s); }));
-
   const sectors = ['All', ...new Set(matches.map(s=>s.s).sort())];
-  let html = `
-    <div class="banner banner-success" style="margin-bottom:20px">
-      <span>✅</span><span>Found <strong>${[...new Set(matches.map(s=>s.t))].length} stocks/ETFs</strong> that pay in your gap months. Click any card to load it into the calculator.</span>
-    </div>
-    <div class="filter-row">
-      ${sectors.map(sec=>`<button class="f-btn ${sec==='All'?'active':''}" onclick="filterCal('${sec}',this)">${sec}</button>`).join('')}
-    </div>`;
-
+  let html = '<div class="banner banner-success" style="margin-bottom:20px"><span>&#9989;</span><span>Found <strong>'+[...new Set(matches.map(s=>s.t))].length+' stocks/ETFs</strong> that pay in your gap months. Click any card to load it into the calculator.</span></div>'+
+    '<div class="filter-row">'+sectors.map(sec=>'<button class="f-btn '+(sec==='All'?'active':'')+'" onclick="filterCal(\''+sec+'\',this)">'+sec+'</button>').join('')+'</div>';
   gaps.forEach(mo => {
     const stocks = byMonth[mo];
     if (!stocks.length) return;
-    html += `<div class="mo-section">
-      <div class="mo-header"><div class="mo-name">${MN_SHORT[mo-1]}</div><div class="cycle-badge">${stocks.length} options</div></div>
-      <div class="stock-grid">
-        ${stocks.map(s=>`
-          <div class="scard" data-sector="${s.s}" onclick="loadTicker('${s.t}')">
-            <div class="sc-ticker">${s.t}</div>
-            <div class="sc-name">${s.n}</div>
-            <div class="sc-stats">
-              <span class="pill p-yield">${s.y.toFixed(1)}% yield</span>
-              <span class="pill p-sector">${s.s}</span>
-              <span class="pill p-freq">${s.f}</span>
-            </div>
-            <div class="sc-cta">→ Load into calculator</div>
-          </div>`).join('')}
-      </div>
-    </div>`;
+    html += '<div class="mo-section"><div class="mo-header"><div class="mo-name">'+MN_SHORT[mo-1]+'</div><div class="cycle-badge">'+stocks.length+' options</div></div><div class="stock-grid">'+
+      stocks.map(s=>'<div class="scard" data-sector="'+s.s+'" onclick="loadTicker(\''+s.t+'\')"><div class="sc-ticker">'+s.t+'</div><div class="sc-name">'+s.n+'</div><div class="sc-stats"><span class="pill p-yield">'+s.y.toFixed(1)+'% yield</span><span class="pill p-sector">'+s.s+'</span><span class="pill p-freq">'+s.f+'</span></div><div class="sc-cta">&rarr; Load into calculator</div></div>').join('')+
+      '</div></div>';
   });
   $('calResults').innerHTML = html;
 }
@@ -753,15 +776,15 @@ function loadTicker(ticker) {
   if (shares > 0) run();
   else {
     $('shares').focus();
-    setBanner('hint',`<span>💡</span><span>${ticker} loaded — enter your share count and hit Calculate.</span>`);
+    setBanner('hint','<span>&#128161;</span><span>'+ticker+' loaded &mdash; enter your share count and hit Calculate.</span>');
   }
 }
 
-// ── KEYBOARD ──────────────────────────────────────────────────────────────────
-['ticker','shares','priceOvr'].forEach(id =>
+['ticker','shares','priceOvr','yearsInput'].forEach(id =>
   $(id).addEventListener('keydown', e => { if (e.key==='Enter') run(); })
 );
 $('ticker').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+$('yearsInput').addEventListener('change', () => { if (activeTab==='multiyear' && S.price>0) renderTable(); });
 </script>
 </body>
 </html>
