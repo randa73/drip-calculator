@@ -3,7 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Revenue from the Internet — DRIP Calculator</title>
+
+<!-- ═══════════════════════════════════════════════════════
+     SEO — Primary target keywords:
+     · dividend calculator (33,100/mo, difficulty 3)
+     · schd dividend calculator (6,600/mo, difficulty 0)
+     · dividend drip calculator (5,400/mo, difficulty 9)
+     · calculator for dividend yield (2,900/mo, difficulty 1)
+     · jepq dividend calculator (1,000/mo, difficulty 0)
+     · msty dividend calculator (1,000/mo, difficulty 0)
+     · monthly dividend calculator (1,000/mo, difficulty 9)
+═══════════════════════════════════════════════════════ -->
+
+<title>DRIP Dividend Calculator — Free Dividend Reinvestment Calculator with Live Data</title>
+
+<meta name="description" content="Free DRIP dividend calculator with live stock data. Calculate dividend yield, monthly income, and reinvestment growth for SCHD, JEPI, JEPQ, MSTY, and any stock or ETF. No sign-up required.">
+
+<meta name="keywords" content="dividend calculator, drip dividend calculator, dividend drip calculator, calculator for dividend yield, schd dividend calculator, jepq dividend calculator, msty dividend calculator, monthly dividend calculator, dividend reinvestment calculator, dividend yield calculator, reinvest dividend calculator">
+
+<meta name="robots" content="index, follow">
+<meta name="author" content="My DRIP Plan">
+
+<!-- Open Graph (for social sharing) -->
+<meta property="og:title" content="DRIP Dividend Calculator — Free Dividend Reinvestment Calculator">
+<meta property="og:description" content="Calculate your dividend income and DRIP reinvestment growth with live stock data. Works with SCHD, JEPI, JEPQ, MSTY, and any ticker. Free, no sign-up.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://drip-calculator-alpha.vercel.app">
+
+<!-- Canonical URL -->
+<link rel="canonical" href="https://drip-calculator-alpha.vercel.app">
+
+<!-- Structured Data — tells Google exactly what this tool is -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DRIP Dividend Calculator",
+  "description": "Free dividend reinvestment calculator. Calculate dividend yield, monthly income, and DRIP compounding growth for any stock or ETF including SCHD, JEPI, JEPQ, and MSTY.",
+  "url": "https://drip-calculator-alpha.vercel.app",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": [
+    "Live dividend yield calculation",
+    "DRIP reinvestment compounding",
+    "Monthly dividend income projection",
+    "Multi-year dividend growth projection",
+    "SCHD dividend calculator",
+    "JEPQ dividend calculator",
+    "MSTY dividend calculator",
+    "Monthly ETF dividend tracker",
+    "CSV export"
+  ]
+}
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -33,6 +91,10 @@
   .header h1 em { font-style:italic; color:var(--accent); }
   .header p { color:var(--text2); margin-top:10px; font-size:14px; max-width:520px; }
   .header p strong { color:var(--accent3); font-weight:500; }
+
+  /* SEO DESCRIPTION — visible to users and Google */
+  .seo-intro { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:24px; font-size:13px; color:var(--text2); line-height:1.7; }
+  .seo-intro strong { color:var(--text); }
 
   /* INPUTS */
   .input-panel { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:28px; margin-bottom:16px; display:grid; grid-template-columns:2fr 2fr 2fr 1fr 1.2fr; gap:20px; align-items:end; }
@@ -160,8 +222,14 @@
   .f-btn { padding:6px 14px; border-radius:20px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border2); background:transparent; color:var(--text2); transition:all 0.15s; }
   .f-btn.active { background:var(--surface2); color:var(--text); border-color:var(--muted); }
 
+  /* SEO FOOTER CONTENT */
+  .seo-footer { margin-top:48px; padding:28px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); }
+  .seo-footer h2 { font-family:'DM Serif Display',serif; font-size:22px; font-weight:400; margin-bottom:12px; color:var(--text); }
+  .seo-footer p { font-size:13px; color:var(--text2); line-height:1.8; margin-bottom:12px; }
+  .seo-footer strong { color:var(--text); }
+
   /* FOOTER */
-  .footer { margin-top:48px; padding-top:24px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .footer { margin-top:24px; padding-top:24px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); font-family:'DM Mono',monospace; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
   .hidden { display:none !important; }
 </style>
 </head>
@@ -178,14 +246,20 @@
   <div id="calcPage">
 
     <div class="header">
+      <div class="eyebrow">Free DRIP Dividend Calculator</div>
       <h1>DRIP <em>Dividend</em><br>Calculator</h1>
-      <p>Live data from Finnhub &mdash; <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding income.</p>
+      <p>Live data from Finnhub &mdash; <strong>no API key, no sign-up.</strong> Enter a ticker, your shares, and project your compounding dividend income monthly, quarterly, and annually.</p>
+    </div>
+
+    <!-- SEO intro paragraph — visible text Google can index -->
+    <div class="seo-intro">
+      Use this free <strong>dividend calculator</strong> to calculate your <strong>dividend yield</strong> and project your reinvestment growth over time. Works with any stock or ETF — including <strong>SCHD</strong>, <strong>JEPQ</strong>, <strong>MSTY</strong>, <strong>JEPI</strong>, <strong>QYLD</strong>, and all monthly dividend payers. Enter a ticker symbol and your share count to see your <strong>monthly dividend income</strong>, quarterly totals, and a full <strong>DRIP reinvestment</strong> projection for up to 30 years.
     </div>
 
     <div class="input-panel">
       <div class="fg">
         <label>Ticker Symbol</label>
-        <input type="text" id="ticker" placeholder="SBUX, O, JNJ&hellip;" autocomplete="off">
+        <input type="text" id="ticker" placeholder="SCHD, JEPQ, MSTY&hellip;" autocomplete="off">
       </div>
       <div class="fg">
         <label>Shares Owned</label>
@@ -230,7 +304,7 @@
     <!-- Status banner -->
     <div id="banner" class="banner banner-hint">
       <span>&#128161;</span>
-      <span>Enter a ticker &amp; shares, then hit Calculate. Fractional shares fully supported.</span>
+      <span>Enter a ticker &amp; shares, then hit Calculate. Try SCHD, JEPQ, MSTY, or any dividend stock. Fractional shares supported.</span>
     </div>
 
     <!-- Results -->
@@ -282,8 +356,25 @@
 
   </div><!-- end calPage -->
 
+  <!-- SEO content block — helps Google understand what the page is about -->
+  <div class="seo-footer" id="seoFooter">
+    <h2>How This Dividend Reinvestment Calculator Works</h2>
+    <p>This free <strong>DRIP dividend calculator</strong> pulls live price and dividend data for any stock or ETF. Enter your ticker symbol and number of shares to instantly see your projected <strong>dividend income</strong> — broken down by month, quarter, and full year — with compounding reinvestment factored in.</p>
+    <p>Popular tickers our users calculate: <strong>SCHD dividend calculator</strong>, <strong>JEPQ dividend calculator</strong>, <strong>MSTY dividend calculator</strong>, <strong>JEPI</strong>, <strong>QYLD</strong>, <strong>SVOL</strong>, <strong>O (Realty Income)</strong>, and hundreds more. Monthly-paying ETFs are fully supported with accurate compounding.</p>
+    <p>The <strong>DRIP (Dividend Reinvestment Plan)</strong> calculation compounds your income monthly — each month's dividend buys new fractional shares, which then earn dividends the following month. This snowball effect is how long-term dividend investors grow their income over time without adding new capital.</p>
+    <p>Use the <strong>Multi-Year tab</strong> to project your dividend income growth over 1 to 30 years. Use the <strong>Fill My Calendar</strong> tab to find stocks that pay dividends in your weakest income months.</p>
+  </div>
+
+  <!-- Affiliate Disclosure & Book Recommendation -->
+  <div style="margin-top:24px;padding:24px;background:#111518;border:1px solid #1e2428;border-radius:10px;text-align:center;">
+    <p style="color:#5a6a78;font-size:12px;margin-bottom:16px;">📚 Recommended Reading for Dividend Investors</p>
+    <p style="color:#dde4ea;font-size:15px;margin-bottom:20px;">Want to learn the strategy behind DRIP investing? Pick up the book that started it all.</p>
+    <a href="https://www.amazon.com/dp/1119404509?tag=mydripplan-20" target="_blank" rel="noopener" style="display:inline-block;background:#c8f06e;color:#0a0e0f;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;font-size:15px;">📖 Get "The Little Book of Common Sense Investing" on Amazon</a>
+    <p style="color:#4a5560;font-size:11px;margin-top:12px;">As an Amazon Associate, My DRIP Plan earns from qualifying purchases.</p>
+  </div>
+
   <div class="footer">
-    <span></span>
+    <span>mydripplan.com &mdash; Free DRIP Dividend Calculator</span>
     <span id="fetchTime"></span>
   </div>
 
@@ -305,6 +396,7 @@ function showPage(p) {
   $('calPage').classList.toggle('hidden',  p !== 'cal');
   $('navCalc').classList.toggle('active',  p === 'calc');
   $('navCal').classList.toggle('active',   p === 'cal');
+  $('seoFooter').classList.toggle('hidden', p !== 'calc');
   if (p === 'cal') renderMoGrid();
 }
 
@@ -347,7 +439,6 @@ const DIV_TABLE = {
   'DE':[5.40,'quarterly'],'EMR':[2.10,'quarterly'],'ITW':[5.60,'quarterly'],
   'ETN':[3.96,'quarterly'],'COP':[2.80,'quarterly'],'OXY':[0.88,'quarterly'],
   'VLO':[4.40,'quarterly'],'PSX':[4.40,'quarterly'],
-  // Monthly payers - covered income / options ETFs
   'JEPI':[5.52,'monthly'],'JEPQ':[5.76,'monthly'],'SPYI':[5.64,'monthly'],
   'QQQI':[5.88,'monthly'],'DIVO':[4.44,'monthly'],'NUSI':[3.60,'monthly'],
   'QYLD':[3.48,'monthly'],'RYLD':[3.24,'monthly'],'XYLD':[4.08,'monthly'],
@@ -356,6 +447,9 @@ const DIV_TABLE = {
   'LAND':[0.84,'monthly'],'NEWT':[2.04,'monthly'],'EARN':[1.08,'monthly'],
   'OXLC':[2.52,'monthly'],'ECC':[2.04,'monthly'],'SLRC':[1.64,'quarterly'],
   'PFLT':[1.44,'monthly'],'TPVG':[1.44,'quarterly'],'CSWC':[2.20,'quarterly'],
+  'MSTY':[24.00,'monthly'],'ULTY':[12.00,'monthly'],'CONY':[18.00,'monthly'],
+  'TSLY':[9.60,'monthly'],'NVDY':[14.40,'monthly'],'AMZY':[8.40,'monthly'],
+  'GOOGY':[4.80,'monthly'],'YMAX':[18.00,'monthly'],'BTCI':[12.00,'monthly'],
 };
 
 async function fetchFinnhub(ticker) {
@@ -363,7 +457,6 @@ async function fetchFinnhub(ticker) {
     signal: AbortSignal.timeout(12000)
   });
   const data = await res.json();
-  // 404 = ticker not found in Finnhub — return price 0 so caller falls back to DIV_TABLE
   if (!res.ok || data.error) {
     return { price: 0, annualDiv: 0, divYield: 0, sector: '', source: 'Table', _notFound: true };
   }
@@ -379,7 +472,8 @@ async function fetchFinnhub(ticker) {
 const MONTHLY_SET = new Set([
   'O','MAIN','STAG','AGNC','PSEC','ADC','EARN','NEWT','GOOD','LAND','GAIN',
   'JEPI','JEPQ','SPYI','QQQI','DIVO','NUSI','QYLD','RYLD','XYLD','SVOL',
-  'PBDC','GLAD','OXLC','ECC','PFLT'
+  'PBDC','GLAD','OXLC','ECC','PFLT','MSTY','ULTY','CONY','TSLY','NVDY',
+  'AMZY','GOOGY','YMAX','BTCI'
 ]);
 const SEMI_SET = new Set(['BNS','TD','RY','BMO','CM','ENB','TRP']);
 
@@ -404,7 +498,6 @@ async function run() {
     loading('Fetching '+ticker+'\u2026');
     let data = await fetchFinnhub(ticker);
     let price = priceOvr || data.price;
-    // If Finnhub didn't find it, check DIV_TABLE for price fallback too
     if (data._notFound && (!price || price <= 0)) {
       setBanner('warn','<span>&#9888;&#65039;</span><span>'+ticker+' not found in live data. Enter a price override above to continue.</span>');
       $('manualRow').classList.add('show');
@@ -505,6 +598,7 @@ function projectMultiYear(startShares, price, annualDiv, frequency, years) {
 
 function renderAll() {
   const tag = $('srcTag'), lbl = $('srcLabel');
+  tag.classList.remove('hidden');
   if (S.dataMode === 'live') { tag.className='src-tag live'; lbl.textContent='Live \u00b7 '+S.source; }
   else { tag.className='src-tag manual'; lbl.textContent='Manual Entry'; }
   renderCards();
@@ -718,6 +812,12 @@ const STOCK_DB = [
   {t:'AGNC',n:'AGNC Investment',     y:15.0,s:'mREIT',      f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {t:'PSEC',n:'Prospect Capital',    y:13.2,s:'BDC',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {t:'ADC', n:'Agree Realty',        y:4.4, s:'REIT',       f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'JEPI',n:'JPMorgan Eq Prem Inc',y:7.2, s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'JEPQ',n:'JPMorgan Nasdaq Eq',  y:9.1, s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'QYLD',n:'Global X NASDAQ Cov', y:11.5,s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'SVOL',n:'Simplify Vol Prem',   y:16.0,s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'MSTY',n:'YieldMax MSTR',       y:85.0,s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {t:'ULTY',n:'YieldMax Ultra',      y:60.0,s:'ETF',        f:'monthly',   pay:[1,2,3,4,5,6,7,8,9,10,11,12]},
 ];
 
 function renderMoGrid() {
@@ -788,12 +888,5 @@ function loadTicker(ticker) {
 $('ticker').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
 $('yearsInput').addEventListener('change', () => { if (activeTab==='multiyear' && S.price>0) renderTable(); });
 </script>
- <!-- Affiliate Disclosure & Book Recommendation -->
-<div style="max-width:960px;margin:40px auto;padding:24px;background:#111518;border:1px solid #1e2428;border-radius:10px;text-align:center;">
-  <p style="color:#5a6a78;font-size:12px;margin-bottom:16px;">📚 Recommended Reading for Dividend Investors</p>
-  <p style="color:#dde4ea;font-size:15px;margin-bottom:20px;">Want to learn the strategy behind DRIP investing? Pick up the book that started it all.</p>
-  <a href="https://www.amazon.com/dp/1119404509?tag=mydripplan-20" target="_blank" rel="noopener" style="display:inline-block;background:#c8f06e;color:#0a0e0f;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;font-size:15px;">📖 Get "The Little Book of Common Sense Investing" on Amazon</a>
-  <p style="color:#4a5560;font-size:11px;margin-top:12px;">As an Amazon Associate, My DRIP Plan earns from qualifying purchases.</p>
-</div> 
 </body>
 </html>
