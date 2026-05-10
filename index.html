@@ -193,9 +193,41 @@
   .growth-bar { height:4px; border-radius:2px; background:var(--accent); opacity:0.7; min-width:2px; }
   .growth-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); min-width:52px; text-align:right; }
 
-  /* MILESTONE BADGE */
-  .milestone { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 9px; border-radius:20px; background:rgba(200,240,110,0.1); color:var(--accent); border:1px solid rgba(200,240,110,0.2); margin-left:8px; vertical-align:middle; cursor:help; position:relative; }
-  .milestone:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e2428; color:var(--text); font-size:10px; padding:5px 10px; border-radius:6px; white-space:nowrap; border:1px solid var(--border2); z-index:100; letter-spacing:0; text-transform:none; font-family:'Instrument Sans',sans-serif; }
+  /* MILESTONE BADGE — FIX 1: tooltip uses JS-positioned div instead of CSS ::after */
+  .milestone {
+    display:inline-block;
+    font-family:'DM Mono',monospace;
+    font-size:9px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:20px;
+    background:rgba(200,240,110,0.1);
+    color:var(--accent);
+    border:1px solid rgba(200,240,110,0.2);
+    margin-left:8px;
+    vertical-align:middle;
+    cursor:help;
+    position:relative;
+  }
+
+  /* Milestone tooltip — reliable fixed-position approach */
+  #milestoneTooltip {
+    position:fixed;
+    background:#1e2428;
+    color:var(--text);
+    font-size:12px;
+    padding:8px 13px;
+    border-radius:8px;
+    border:1px solid var(--border2);
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    z-index:9999;
+    pointer-events:none;
+    max-width:280px;
+    line-height:1.5;
+    font-family:'Instrument Sans',sans-serif;
+    display:none;
+  }
 
   /* EVERY 5 YEARS HIGHLIGHT */
   tr.yr5 { background:rgba(200,240,110,0.025) !important; }
@@ -241,7 +273,6 @@
   .seo-footer p { font-size:13px; color:var(--text2); line-height:1.8; margin-bottom:12px; }
   .seo-footer strong { color:var(--text); }
 
-
   /* CHART */
   .chart-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; display:none; }
   .chart-wrap.show { display:block; }
@@ -275,6 +306,10 @@
 </style>
 </head>
 <body>
+
+<!-- FIX 1: Global tooltip div for milestones — single element, JS-positioned -->
+<div id="milestoneTooltip"></div>
+
 <div class="wrapper">
 
   <!-- PAGE NAV -->
@@ -320,15 +355,15 @@
       </div>
     </div>
 
-    <!-- Manual fallback -->
+    <!-- Manual fallback — FIX 2: always accessible, clear labels -->
     <div class="manual-row" id="manualRow">
-      <div class="manual-label" style="display:none">placeholder</div>
+      <div class="manual-label">&#9998; Manual Data Entry — fill in the fields below and click Use Manual Data</div>
       <div class="fg">
         <label>Annual Div / Share ($)</label>
         <input type="number" id="manualDiv" placeholder="e.g. 2.44" min="0" step="0.01">
       </div>
       <div class="fg">
-        <label>Payout Frequency (click to select)</label>
+        <label>Payout Frequency</label>
         <div class="select-wrap">
           <select id="manualFreq">
             <option value="monthly">Monthly</option>
@@ -483,6 +518,32 @@ const fmt    = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maxi
 const fmtUSD = n => '$'+fmt(n);
 const fmtPct = n => fmt(n,2)+'%';
 
+// ── FIX 1: Milestone tooltip — JS-driven, always correct ──────────────────
+(function() {
+  const tip = document.getElementById('milestoneTooltip');
+  document.addEventListener('mouseover', function(e) {
+    const el = e.target.closest('.milestone');
+    if (!el) return;
+    const text = el.getAttribute('data-tip');
+    if (!text) return;
+    tip.textContent = text;
+    tip.style.display = 'block';
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (tip.style.display === 'none') return;
+    const x = e.clientX + 14;
+    const y = e.clientY - 36;
+    // Keep within viewport
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+    tip.style.left = Math.min(x, window.innerWidth - tw - 12) + 'px';
+    tip.style.top  = Math.max(y, 8) + 'px';
+  });
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.closest('.milestone')) tip.style.display = 'none';
+  });
+})();
+
 function showPage(p) {
   $('calcPage').classList.toggle('hidden', p !== 'calc');
   $('calPage').classList.toggle('hidden',  p !== 'cal');
@@ -590,25 +651,34 @@ async function run() {
     loading('Fetching '+ticker+'\u2026');
     let data = await fetchFinnhub(ticker);
     let price = priceOvr || data.price;
+
+    // ── FIX 2a: ticker not found AND no price override ─────────────────────
     if (data._notFound && (!price || price <= 0)) {
-      setBanner('warn','<span>&#9888;&#65039;</span><span>'+ticker+' not found in live data. Enter a price override above to continue.</span>');
+      setBanner('warn','<span>&#9888;&#65039;</span><span><strong>'+ticker+'</strong> was not found in live data. Enter the <strong>Price Override</strong> above, then fill in the Annual Div/Share and frequency below and click <strong>Use Manual Data</strong>.</span>');
       $('manualRow').classList.add('show');
       S.ticker = ticker; S.shares = shares;
+      setTimeout(() => $('priceOvr').focus(), 50);
       $('calcBtn').disabled = false;
       return;
     }
+
     if (!price || price <= 0) throw new Error('No price returned. Enter a price override and try again.');
+
     if (!data.annualDiv || data.annualDiv <= 0) {
       const row = DIV_TABLE[ticker];
       if (row) { data.annualDiv = row[0]; data.source = 'Yahoo + Table'; data._freqOverride = row[1]; }
     }
+
+    // ── FIX 2b: price found but no dividend data ───────────────────────────
     if (!data.annualDiv || data.annualDiv <= 0) {
-      $('banner').className = 'banner hidden';
+      setBanner('warn','<span>&#9888;&#65039;</span><span><strong>'+ticker+'</strong> found at <strong>'+fmtUSD(price)+'</strong> but no dividend data is available. Enter the Annual Div/Share and frequency below, then click <strong>Use Manual Data</strong>.</span>');
       $('manualRow').classList.add('show');
       S.ticker = ticker; S.shares = shares; S.price = price;
+      setTimeout(() => $('manualDiv').focus(), 50);
       $('calcBtn').disabled = false;
       return;
     }
+
     const frequency = data._freqOverride || getFrequency(ticker, data.sector);
     S = { ticker, shares, price, annualDiv: data.annualDiv, divYield: data.divYield || (data.annualDiv/price*100), frequency, sector: data.sector, dataMode:'live', source: data.source };
     renderAll();
@@ -630,12 +700,12 @@ function runManual() {
   const price     = parseFloat($('priceOvr').value) || S.price || 0;
   const annualDiv = parseFloat($('manualDiv').value) || 0;
   const frequency = $('manualFreq').value;
-  if (!shares || shares <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter shares owned.</span>');
-  if (!price  || price  <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter a price override \u2014 required for manual mode.</span>');
-  if (!annualDiv || annualDiv <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter the annual dividend per share.</span>');
+  if (!shares || shares <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter shares owned in the Shares Owned field above.</span>');
+  if (!price  || price  <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter the current share price in the <strong>Price Override</strong> field above.</span>');
+  if (!annualDiv || annualDiv <= 0) return setBanner('error','<span>&#9888;&#65039;</span><span>Enter the annual dividend per share in the field to the left.</span>');
   S = { ticker, shares, price, annualDiv, divYield:(annualDiv/price*100), frequency, sector:'', dataMode:'manual', source:'Manual' };
   renderAll();
-  setBanner('warn','<span>&#128221;</span><span>Using manually entered dividend data.</span>');
+  setBanner('warn','<span>&#128221;</span><span>Using manually entered dividend data for <strong>'+ticker+'</strong>.</span>');
 }
 
 function project(startShares, price, annualDiv, frequency, months) {
@@ -716,7 +786,6 @@ function setTab(t, el) {
   activeTab = t;
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   el.classList.add('active');
-  // Show/hide chart and compare panel
   var cw = $('chartWrap'), cp = $('comparePanel');
   if (t === 'multiyear') { cw.classList.add('show'); cp.classList.remove('show'); }
   else if (t === 'compare') { cp.classList.add('show'); cw.classList.remove('show'); }
@@ -761,13 +830,18 @@ function renderTable() {
 
     $('tHead').innerHTML = '<tr><th>Year</th><th>Annual Income</th><th>New Shares</th><th>Total Shares</th><th>Income Growth</th></tr>';
 
+    // ── FIX 1: Each milestone level has its own unique data-tip ───────────
     $('tBody').innerHTML = myRows.map(r => {
       const isY5 = r.year % 5 === 0;
       const barWidth = Math.max(Math.round((r.annualIncome / maxIncome) * 80), 2);
       let milestone = '';
       if (r.year > 1) {
-        if (r.incomeVsBase >= 100) milestone = '<span class="milestone" data-tip="Your income has doubled compared to Year 1">Income doubled vs. Yr 1</span>';
-        else if (r.incomeVsBase >= 50) milestone = '<span class="milestone" data-tip="Your income is 50% higher than Year 1">Income up 50% vs. Yr 1</span>';
+        if      (r.incomeVsBase >= 200) milestone = '<span class="milestone" data-tip="Income has tripled vs. Year 1 — DRIP compounding is working at full power!">Income 3x vs. Yr 1 🚀</span>';
+        else if (r.incomeVsBase >= 150) milestone = '<span class="milestone" data-tip="Income is 2.5x your Year 1 baseline — extraordinary compounding at work">Income 2.5x vs. Yr 1 ⚡</span>';
+        else if (r.incomeVsBase >= 100) milestone = '<span class="milestone" data-tip="Income has doubled vs. Year 1 — your reinvested shares are generating serious additional income">Income 2x vs. Yr 1 🎯</span>';
+        else if (r.incomeVsBase >= 75)  milestone = '<span class="milestone" data-tip="Income is 75% higher than Year 1 — three-quarters of the way to doubling">Income up 75% vs. Yr 1</span>';
+        else if (r.incomeVsBase >= 50)  milestone = '<span class="milestone" data-tip="Income is 50% higher than Year 1 — reinvestment compounding is clearly gaining momentum">Income up 50% vs. Yr 1</span>';
+        else if (r.incomeVsBase >= 25)  milestone = '<span class="milestone" data-tip="Income is 25% higher than Year 1 — DRIP reinvestment is starting to compound meaningfully">Income up 25% vs. Yr 1</span>';
       }
       return '<tr class="'+(isY5?'yr5':'')+'">'+
         '<td>Yr '+r.year+milestone+'</td>'+
@@ -784,7 +858,6 @@ function renderTable() {
       '<td>'+fmt(myRows[myRows.length-1].sharesEnd,4)+'</td>'+
       '<td><span class="growth-pct">+'+fmt(myRows[myRows.length-1].incomeVsBase,1)+'%</span></td>'+
     '</tr>';
-    // Render chart
     renderGrowthChart(myRows, S.ticker);
   }
 }
@@ -871,11 +944,9 @@ function renderGrowthChart(myRows, ticker) {
   });
 }
 
-
 var compareChartInst = null;
 
 async function fetchDivData(ticker) {
-  // Try Finnhub first
   try {
     var res = await fetch('/api/stock?ticker='+encodeURIComponent(ticker), { signal: AbortSignal.timeout(10000) });
     var data = await res.json();
@@ -918,19 +989,8 @@ async function runCompare() {
   var yr1A = rowsA[0].annualIncome, yr1B = rowsB[0].annualIncome;
   var lastA = rowsA[years-1], lastB = rowsB[years-1];
   var winnerIncome = totalA >= totalB ? tA : tB;
-  var winnerShares = lastA.sharesEnd >= lastB.sharesEnd ? tA : tB;
-
-  function statRow(lbl, vA, vB, clsA, clsB, winnerVal) {
-    var wA = winnerVal === tA ? '<span class="compare-winner">winner</span>' : '';
-    var wB = winnerVal === tB ? '<span class="compare-winner">winner</span>' : '';
-    return '<div class="compare-stat"><span class="compare-stat-lbl">'+lbl+'</span><span></span></div>' +
-           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'+
-           '<div style="font-family:DM Mono,monospace;font-size:13px;color:var(--'+clsA+')">'+vA+wA+'</div>'+
-           '<div style="font-family:DM Mono,monospace;font-size:13px;color:var(--'+clsB+')">'+vB+wB+'</div></div>';
-  }
 
   var html2 = '<div class="compare-grid">';
-  // Column A
   html2 += '<div class="compare-col"><div class="compare-col-title a">'+tA+'</div>';
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Annual Div/Share</span><span class="compare-stat-val accent">'+fmtUSD(dA.annualDiv)+'</span></div>';
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Frequency</span><span class="compare-stat-val">'+dA.frequency+'</span></div>';
@@ -939,7 +999,6 @@ async function runCompare() {
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Shares after '+years+'yr</span><span class="compare-stat-val accent">'+fmt(lastA.sharesEnd,4)+'</span></div>';
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Income growth</span><span class="compare-stat-val green">+'+fmt(lastA.incomeVsBase,1)+'%</span></div>';
   html2 += '</div>';
-  // Column B
   html2 += '<div class="compare-col"><div class="compare-col-title b">'+tB+'</div>';
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Annual Div/Share</span><span class="compare-stat-val blue">'+fmtUSD(dB.annualDiv)+'</span></div>';
   html2 += '<div class="compare-stat"><span class="compare-stat-lbl">Frequency</span><span class="compare-stat-val">'+dB.frequency+'</span></div>';
@@ -951,7 +1010,6 @@ async function runCompare() {
 
   $('compareResults').innerHTML = html2;
 
-  // Compare chart
   $('compareChartWrap').classList.add('show');
   if (compareChartInst) { compareChartInst.destroy(); compareChartInst = null; }
   var labels = rowsA.map(function(r){ return 'Yr '+r.year; });
