@@ -86,6 +86,9 @@
   .nav-btn { padding:10px 22px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--text2); font-family:'Instrument Sans',sans-serif; transition:all 0.15s; }
   .nav-btn.active { background:var(--accent); color:#0a0e0f; }
   .nav-btn:hover:not(.active) { color:var(--text); }
+  #navCal { background:rgba(125,212,252,0.1); color:var(--accent2); border:1px solid rgba(125,212,252,0.25); }
+  #navCal:hover:not(.active) { background:rgba(125,212,252,0.2); color:var(--accent2); }
+  #navCal.active { background:var(--accent2); color:#0a0e0f; border-color:var(--accent2); }
 
   /* HEADER */
   .header { margin-bottom: 36px; }
@@ -104,9 +107,14 @@
   @media(max-width:700px){ .input-panel { grid-template-columns:1fr 1fr; } }
   .fg { display:flex; flex-direction:column; gap:6px; }
   .fg label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); }
-  input, select { background:var(--bg); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; width:100%; outline:none; transition:border-color 0.15s, box-shadow 0.15s; appearance:none; }
-  input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,240,110,0.08); }
+  input { background:var(--bg); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; width:100%; outline:none; transition:border-color 0.15s, box-shadow 0.15s; appearance:none; }
+  input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,240,110,0.08); }
   input::placeholder { color:var(--muted); }
+  .select-wrap { position:relative; width:100%; }
+  .select-wrap::after { content:'\25BE'; position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--accent); font-size:16px; pointer-events:none; font-weight:bold; }
+  select { background:var(--bg); border:2px solid var(--accent); border-radius:var(--radius); padding:10px 36px 10px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:13px; width:100%; outline:none; transition:all 0.15s; appearance:none; cursor:pointer; }
+  select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,240,110,0.15); }
+  select:hover { border-color:#d6f87a; background:rgba(200,240,110,0.03); }
 
   /* MANUAL ROW */
   .manual-row { background:rgba(240,168,104,0.05); border:1px solid rgba(240,168,104,0.15); border-radius:var(--radius-lg); padding:20px 24px; margin-bottom:16px; display:none; gap:20px; align-items:end; flex-wrap:wrap; }
@@ -185,7 +193,8 @@
   .growth-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); min-width:52px; text-align:right; }
 
   /* MILESTONE BADGE */
-  .milestone { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:2px 8px; border-radius:20px; background:rgba(200,240,110,0.1); color:var(--accent); border:1px solid rgba(200,240,110,0.2); margin-left:8px; vertical-align:middle; }
+  .milestone { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; padding:3px 9px; border-radius:20px; background:rgba(200,240,110,0.1); color:var(--accent); border:1px solid rgba(200,240,110,0.2); margin-left:8px; vertical-align:middle; cursor:help; position:relative; }
+  .milestone:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#1e2428; color:var(--text); font-size:10px; padding:5px 10px; border-radius:6px; white-space:nowrap; border:1px solid var(--border2); z-index:100; letter-spacing:0; text-transform:none; font-family:'Instrument Sans',sans-serif; }
 
   /* EVERY 5 YEARS HIGHLIGHT */
   tr.yr5 { background:rgba(200,240,110,0.025) !important; }
@@ -290,13 +299,15 @@
         <input type="number" id="manualDiv" placeholder="e.g. 2.44" min="0" step="0.01">
       </div>
       <div class="fg">
-        <label>Payout Frequency</label>
-        <select id="manualFreq">
-          <option value="monthly">Monthly</option>
-          <option value="quarterly">Quarterly</option>
-          <option value="semi-annual">Semi-Annual</option>
-          <option value="annual">Annual</option>
-        </select>
+        <label>Payout Frequency (click to select)</label>
+        <div class="select-wrap">
+          <select id="manualFreq">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="semi-annual">Semi-Annual</option>
+            <option value="annual">Annual</option>
+          </select>
+        </div>
       </div>
       <div class="fg">
         <label>&nbsp;</label>
@@ -332,6 +343,16 @@
           <tbody id="tBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Calendar teaser banner shown after results -->
+    <div id="calTeaser" class="hidden" style="margin-top:20px;background:linear-gradient(135deg,rgba(125,212,252,0.08),rgba(125,212,252,0.03));border:1px solid rgba(125,212,252,0.2);border-radius:var(--radius-lg);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:6px;">&#128197; Did you know?</div>
+        <div style="font-size:14px;color:var(--text);font-weight:500;">Want consistent dividend income every month?</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Find stocks and ETFs that pay in your weakest income months and build a smooth income stream all year round.</div>
+      </div>
+      <button onclick="showPage('cal')" style="background:var(--accent2);color:#0a0e0f;border:none;border-radius:var(--radius);padding:11px 20px;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Fill My Calendar &#8594;</button>
     </div>
 
   </div><!-- end calcPage -->
@@ -607,6 +628,7 @@ function renderAll() {
   renderCards();
   renderTable();
   $('results').classList.remove('hidden');
+  $('calTeaser').classList.remove('hidden');
 }
 
 function renderCards() {
@@ -671,8 +693,8 @@ function renderTable() {
       const barWidth = Math.max(Math.round((r.annualIncome / maxIncome) * 80), 2);
       let milestone = '';
       if (r.year > 1) {
-        if (r.incomeVsBase >= 100) milestone = '<span class="milestone">2&times; income</span>';
-        else if (r.incomeVsBase >= 50) milestone = '<span class="milestone">+50% income</span>';
+        if (r.incomeVsBase >= 100) milestone = '<span class="milestone" data-tip="Your income has doubled compared to Year 1">Income doubled vs. Yr 1</span>';
+        else if (r.incomeVsBase >= 50) milestone = '<span class="milestone" data-tip="Your income is 50% higher than Year 1">Income up 50% vs. Yr 1</span>';
       }
       return '<tr class="'+(isY5?'yr5':'')+'">'+
         '<td>Yr '+r.year+milestone+'</td>'+
