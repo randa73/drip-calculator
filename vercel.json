@@ -5,7 +5,7 @@
   "crons": [
     {
       "path": "/api/index-ping",
-      "schedule": "*/40 * * * *" 
+      "schedule": "*/40 * * * *"  
     }
   ]
 }
